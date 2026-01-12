@@ -4,8 +4,8 @@
     .version = "9.7.4",
     .dependencies = .{
         .rocksdb = .{
-            .url = "git+https://github.com/Syndica/rocksdb#3793e721c7795b338d9d7808544b75db6bde3548",
-            .hash = "N-V-__8AAAKhcQL5PtDzqfPNCjk1LJCK8svO8KtC-f_3bj6z",
+            .url = "git+https://github.com/facebook/rocksdb#812b12bc7827eb0589927befc1514cff86eb46c6",
+            .hash = "N-V-__8AADz2jAILZ4kSgzdueN1CDH1g_TmPzgTMayhyiVMC",
         },
     },
     .minimum_zig_version = "0.15.0",
