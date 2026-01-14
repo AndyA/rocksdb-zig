@@ -5,7 +5,7 @@
 import glob
 from typing import Generator
 
-ROCKSDB = "../syndica-rocksdb"
+ROCKSDB = "../rocksdb"
 
 DIRS = [
     "cache",
