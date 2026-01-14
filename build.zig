@@ -91,6 +91,13 @@ fn buildRocksDB(
     librocksdb.root_module.addIncludePath(rocks_dep.path("include"));
     librocksdb.root_module.addIncludePath(rocks_dep.path("."));
 
+    const flags = &[_][]const u8{
+        "-O2",
+        "-std=c++17",
+        "-faligned-new",
+        "-DHAVE_ALIGNED_NEW",
+    };
+
     librocksdb.root_module.addCSourceFiles(.{
         .root = rocks_dep.path("."),
         .files = &.{
@@ -317,9 +324,6 @@ fn buildRocksDB(
             "tools/block_cache_analyzer/block_cache_trace_analyzer.cc",
             "tools/dump/db_dump_tool.cc",
             "tools/io_tracer_parser_tool.cc",
-            // "tools/ldb_cmd.cc",
-            // "tools/ldb_tool.cc",
-            // "tools/sst_dump_tool.cc",
             "tools/tool_hooks.cc",
             "tools/trace_analyzer_tool.cc",
             "trace_replay/block_cache_tracer.cc",
@@ -397,7 +401,6 @@ fn buildRocksDB(
             "utilities/persistent_cache/block_cache_tier.cc",
             "utilities/persistent_cache/persistent_cache_tier.cc",
             "utilities/persistent_cache/volatile_tier_impl.cc",
-            // "utilities/secondary_index/faiss_ivf_index.cc",
             "utilities/secondary_index/secondary_index_iterator.cc",
             "utilities/secondary_index/simple_secondary_index.cc",
             "utilities/simulator_cache/cache_simulator.cc",
@@ -442,24 +445,14 @@ fn buildRocksDB(
             "utilities/write_batch_with_index/write_batch_with_index_internal.cc",
             "utilities/write_batch_with_index/write_batch_with_index.cc",
         },
-        .flags = &.{
-            "-std=c++17",
-            "-faligned-new",
-            "-DHAVE_ALIGNED_NEW",
-            "-DROCKSDB_UBSAN_RUN",
-        },
+        .flags = flags,
     });
 
     // platform dependent stuff
     if (t.cpu.arch == .aarch64) {
         librocksdb.root_module.addCSourceFile(.{
             .file = rocks_dep.path("util/crc32c_arm64.cc"),
-            .flags = &.{
-                "-std=c++17",
-                "-faligned-new",
-                "-DHAVE_ALIGNED_NEW",
-                "-DROCKSDB_UBSAN_RUN",
-            },
+            .flags = flags,
         });
     }
 
@@ -474,11 +467,7 @@ fn buildRocksDB(
                 "env/fs_posix.cc",
                 "env/io_posix.cc",
             },
-            .flags = &.{
-                "-std=c++17",
-                "-faligned-new",
-                "-DHAVE_ALIGNED_NEW",
-            },
+            .flags = flags,
         });
     } else {
         @panic("TODO: support windows!");
