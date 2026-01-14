@@ -109,6 +109,7 @@ fn buildRocksDB(
         "-std=c++17",
         "-faligned-new",
         "-DHAVE_ALIGNED_NEW",
+        "-DROCKSDB_UBSAN_RUN",
     };
 
     librocksdb.root_module.addCSourceFiles(.{
