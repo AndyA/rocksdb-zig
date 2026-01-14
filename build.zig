@@ -22,6 +22,19 @@ pub fn build(b: *Build) void {
     const test_step = b.step("test", "Run bindings tests");
     tests.root_module.addImport("rocksdb", rocksdb_mod);
     test_step.dependOn(&b.addRunArtifact(tests).step);
+
+    const exe = b.addExecutable(.{
+        .name = "main",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/main.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{},
+        }),
+    });
+
+    exe.root_module.addImport("rocksdb", bindings_mod);
+    b.installArtifact(exe);
 }
 
 /// Create a zig module for the bare C++ library by exposing its C api.
@@ -96,7 +109,6 @@ fn buildRocksDB(
         "-std=c++17",
         "-faligned-new",
         "-DHAVE_ALIGNED_NEW",
-        "-DROCKSDB_UBSAN_RUN",
     };
 
     librocksdb.root_module.addCSourceFiles(.{
