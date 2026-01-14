@@ -17,9 +17,7 @@ pub fn build(b: *Build) void {
     bindings_mod.addImport("rocksdb", rocksdb_mod);
 
     const tests = b.addTest(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/lib.zig"),
+        .root_module = rocksdb_mod,
     });
     const test_step = b.step("test", "Run bindings tests");
     tests.root_module.addImport("rocksdb", rocksdb_mod);
@@ -56,6 +54,8 @@ fn addRocksDB(
             .target = target,
             .optimize = optimize,
             .pic = if (force_pic == true) true else null,
+            .link_libc = true,
+            .link_libcpp = true,
         }),
     });
     const dynamic_rocksdb = b.addLibrary(.{
@@ -65,6 +65,8 @@ fn addRocksDB(
             .target = target,
             .optimize = optimize,
             .pic = if (force_pic == true) true else null,
+            .link_libc = true,
+            .link_libcpp = true,
         }),
     });
 
@@ -86,12 +88,12 @@ fn buildRocksDB(
     const t = target.result;
     const rocks_dep = b.dependency("rocksdb", .{});
 
-    librocksdb.linkLibC();
-    librocksdb.linkLibCpp();
+    librocksdb.root_module.addIncludePath(rocks_dep.path("include"));
+    librocksdb.root_module.addIncludePath(rocks_dep.path("."));
 
-    librocksdb.addIncludePath(rocks_dep.path("include"));
-    librocksdb.addIncludePath(rocks_dep.path("."));
-    librocksdb.addCSourceFiles(.{
+    // librocksdb.addIncludePath(rocks_dep.path("include"));
+    // librocksdb.addIncludePath(rocks_dep.path("."));
+    librocksdb.root_module.addCSourceFiles(.{
         .root = rocks_dep.path("."),
         .files = &.{
             "cache/cache.cc",
@@ -441,7 +443,7 @@ fn buildRocksDB(
 
     // platform dependent stuff
     if (t.cpu.arch == .aarch64) {
-        librocksdb.addCSourceFile(.{
+        librocksdb.root_module.addCSourceFile(.{
             .file = rocks_dep.path("util/crc32c_arm64.cc"),
             .flags = &.{
                 "-std=c++17",
@@ -455,7 +457,7 @@ fn buildRocksDB(
     if (t.os.tag != .windows) {
         librocksdb.root_module.addCMacro("ROCKSDB_PLATFORM_POSIX", "");
         librocksdb.root_module.addCMacro("ROCKSDB_LIB_IO_POSIX", "");
-        librocksdb.addCSourceFiles(.{
+        librocksdb.root_module.addCSourceFiles(.{
             .root = rocks_dep.path("."),
             .files = &.{
                 "port/port_posix.cc",
@@ -492,7 +494,7 @@ fn buildRocksDB(
         .ROCKSDB_PLUGIN_EXTERNS = null,
         .ROCKSDB_PLUGIN_BUILTINS = null,
     });
-    librocksdb.addCSourceFile(.{ .file = build_version.getOutput() });
+    librocksdb.root_module.addCSourceFile(.{ .file = build_version.getOutputFile() });
 
     b.installArtifact(librocksdb);
 }

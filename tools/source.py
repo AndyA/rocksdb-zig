@@ -42,7 +42,11 @@ for file in find_sources(ROCKSDB, DIRS):
         continue
     if file.endswith("_bench.cc"):
         continue
-    print(file)
+    if file.endswith("_posix.cc"):
+        continue
+    if file.endswith("_arm64.cc"):
+        continue
+    print(f'"{file}",')
 
 for file in EXTRA:
-    print(file)
+    print(f'"{file}",')
