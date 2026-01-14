@@ -95,6 +95,7 @@ fn buildRocksDB(
         "-O2",
         "-std=c++17",
         "-faligned-new",
+        "-fno-sanitize=undefined",
         "-DHAVE_ALIGNED_NEW",
         "-DROCKSDB_UBSAN_RUN",
     };
