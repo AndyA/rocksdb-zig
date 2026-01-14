@@ -83,8 +83,8 @@ fn addRocksDB(
         }),
     });
 
-    try buildRocksDB(b, static_rocksdb, target);
-    try buildRocksDB(b, dynamic_rocksdb, target);
+    try buildRocksDB(b, static_rocksdb, target, optimize);
+    try buildRocksDB(b, dynamic_rocksdb, target, optimize);
 
     mod.addIncludePath(rocks_dep.path("include"));
     mod.linkLibrary(static_rocksdb);
@@ -92,25 +92,35 @@ fn addRocksDB(
     return mod;
 }
 
+fn getBuildFlags(optimize: OptimizeMode) []const []const u8 {
+    const flags = &[_][]const u8{
+        "-O2",
+        "-std=c++17",
+        "-faligned-new",
+        "-DHAVE_ALIGNED_NEW",
+    };
+
+    return switch (optimize) {
+        .Debug => flags,
+        else => flags ++ &[_][]const u8{
+            "-DROCKSDB_UBSAN_RUN",
+        },
+    };
+}
+
 /// The build process for rocksdb itself. works for static or shared library
 fn buildRocksDB(
     b: *Build,
     librocksdb: *std.Build.Step.Compile,
     target: std.Build.ResolvedTarget,
+    optimize: OptimizeMode,
 ) !void {
     const t = target.result;
     const rocks_dep = b.dependency("rocksdb", .{});
 
     librocksdb.root_module.addIncludePath(rocks_dep.path("include"));
     librocksdb.root_module.addIncludePath(rocks_dep.path("."));
-
-    const flags = &[_][]const u8{
-        "-O2",
-        "-std=c++17",
-        "-faligned-new",
-        "-DHAVE_ALIGNED_NEW",
-        "-DROCKSDB_UBSAN_RUN",
-    };
+    const flags = getBuildFlags(optimize);
 
     librocksdb.root_module.addCSourceFiles(.{
         .root = rocks_dep.path("."),
