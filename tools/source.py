@@ -48,13 +48,17 @@ EXCLUDE = {
     "tools/dump/rocksdb_undump.cc",
     "tools/io_tracer_parser.cc",
     "tools/ldb.cc",
+    "tools/ldb_cmd.cc",
+    "tools/ldb_tool.cc",
     "tools/simulated_hybrid_file_system.cc",
     "tools/sst_dump.cc",
+    "tools/sst_dump_tool.cc",
     "tools/trace_analyzer.cc",
     "tools/write_stress.cc",
     "utilities/agg_merge/test_agg_merge.cc",
     "utilities/cassandra/test_utils.cc",
     "utilities/convenience/info_log_finder.cc",
+    "utilities/secondary_index/faiss_ivf_index.cc",
 }
 
 
