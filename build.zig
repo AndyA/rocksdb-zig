@@ -101,10 +101,10 @@ fn getBuildFlags(optimize: OptimizeMode) []const []const u8 {
     };
 
     return switch (optimize) {
-        .Debug => flags,
-        else => flags ++ &[_][]const u8{
+        .Debug, .ReleaseSafe => flags ++ &[_][]const u8{
             "-DROCKSDB_UBSAN_RUN",
         },
+        else => flags,
     };
 }
 
