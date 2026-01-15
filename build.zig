@@ -94,7 +94,7 @@ fn addRocksDB(
 
 fn getBuildFlags(optimize: OptimizeMode) []const []const u8 {
     const flags = &[_][]const u8{
-        "-O2",
+        // "-O2",
         "-std=c++17",
         "-faligned-new",
         "-DHAVE_ALIGNED_NEW",
