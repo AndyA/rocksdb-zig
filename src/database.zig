@@ -3,7 +3,7 @@ const rdb = @import("rocksdb");
 const lib = @import("lib.zig");
 
 const Allocator = std.mem.Allocator;
-const RwLock = std.Thread.RwLock;
+const RwLock = std.Io.RwLock;
 
 const Data = lib.Data;
 const Iterator = lib.Iterator;
@@ -501,7 +501,7 @@ const CfNameToHandleMap = struct {
         self.* = .{
             .allocator = allocator,
             .map = .{},
-            .lock = .{},
+            .lock = .init,
         };
         return self;
     }
