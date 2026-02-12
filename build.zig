@@ -6,6 +6,7 @@ const OptimizeMode = std.builtin.OptimizeMode;
 pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const rocks_dep = b.dependency("rocksdb", .{});
 
     // RocksDB's translate-c module
     const rocksdb_mod = addRocksDB(b, target, optimize);
@@ -15,6 +16,7 @@ pub fn build(b: *Build) void {
         .root_source_file = b.path("src/lib.zig"),
     });
     bindings_mod.addImport("rocksdb", rocksdb_mod);
+    bindings_mod.addIncludePath(rocks_dep.path("include"));
 
     const tests = b.addTest(.{
         .root_module = bindings_mod,
