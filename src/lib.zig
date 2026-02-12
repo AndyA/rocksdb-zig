@@ -24,4 +24,5 @@ pub const iterator = @import("iterator.zig");
 test {
     const std = @import("std");
     std.testing.refAllDecls(@This());
+    _ = @import("db2.zig");
 }
