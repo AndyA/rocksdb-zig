@@ -247,10 +247,10 @@ pub const DB = struct {
         return ri;
     }
 
-    pub fn liveFiles(self: *const Self, allocator: Allocator) Allocator.Error!std.ArrayList(LiveFile) {
+    pub fn liveFiles(self: *const Self, allocator: Allocator) Allocator.Error!std.array_list.Managed(LiveFile) {
         const files = rdb.rocksdb_livefiles(self.db).?;
         const num_files: usize = @intCast(rdb.rocksdb_livefiles_count(files));
-        var livefiles = std.ArrayList(LiveFile).init(allocator);
+        var livefiles = std.array_list.Managed(LiveFile).init(allocator);
         var key_size: usize = 0;
         for (0..num_files) |i| {
             const file_num: c_int = @intCast(i);
@@ -358,7 +358,7 @@ test "DB clean init and deinit" {
         pub fn run(allocator: Allocator) !void {
             var dir = std.testing.tmpDir(.{});
             defer dir.cleanup();
-            const path = try dir.dir.realpathAlloc(allocator, ".");
+            const path = try dir.dir.realPathFileAlloc(std.testing.io, ".", allocator);
             defer allocator.free(path);
 
             var data: ?Data = null;
