@@ -280,13 +280,13 @@ class Arena:
 
 
 def show_fn(fn: FunctionProtoWrapper) -> None:
-    end = "" if len(fn.args) < 2 else "\n      "
-    print(f"    pub fn {fn.zig_name}(", end=end)
+    print(f"// {fn.name}")
+    print(f"pub fn {fn.zig_name}(")
     for arg in fn.args:
-        print(f"{arg.name}: {arg.type.zig_type}, ", end=end)
+        print(f"{arg.name}: {arg.type.zig_type}, ")
     print(f") {fn.return_type.zig_type} " + "{")
     for arg in fn.args:
-        print(f"_ = {arg.name};", end=end)
+        print(f"_ = {arg.name};")
     print("}")
 
     print()
