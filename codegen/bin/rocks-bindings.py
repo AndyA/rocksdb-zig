@@ -53,8 +53,9 @@ class TypedefWrapper(CursorWrapper):
 
     @cached_property
     def class_name(self) -> str:
-        assert self.name.endswith("_t")
-        return self.name[:-1]
+        if self.name.endswith("_t"):
+            return self.name[:-1]
+        return self.name + "_"
 
     @cached_property
     def prefix(self) -> Optional[str]:
@@ -82,7 +83,8 @@ class TypeWrapper:
         return re.sub(r"^const\s+", "", self.full_name)
 
     def const(self) -> bool:
-        return self.type.is_const_qualified()
+        return self.full_name.startswith("const ")
+        # return self.type.is_const_qualified()
 
     @cached_property
     def ref(self) -> Optional["TypeWrapper"]:
@@ -93,9 +95,54 @@ class TypeWrapper:
             )
         return None
 
+    @cached_property
+    def elt(self) -> Optional["TypeWrapper"]:
+        if self.type.kind == TypeKind.INCOMPLETEARRAY:
+            return TypeWrapper(
+                arena=self.arena,
+                type=self.type.get_array_element_type(),
+            )
+        return None
+
+    @cached_property
+    def zig_type(self) -> str:
+        match self.type.kind:
+            case TypeKind.POINTER:
+                if self.const:
+                    return "*const " + self.ref.zig_type
+                else:
+                    return "*" + self.ref.zig_type
+            case TypeKind.ELABORATED:
+                if clz := self.arena.typedef_index.get(self.name):
+                    return clz.zig_name
+                return self.name
+            case TypeKind.CHAR_S:
+                return "i8"
+            case TypeKind.UCHAR:
+                return "u8"
+            case TypeKind.INT:
+                return "i64"
+            case TypeKind.UINT:
+                return "u64"
+            case TypeKind.INCOMPLETEARRAY:
+                return "[*]" + self.elt.zig_type
+            case TypeKind.DOUBLE:
+                return "f64"
+            case TypeKind.VOID:
+                return "void"
+            case TypeKind.FUNCTIONPROTO:
+                return "fn"  # TODO
+            case _:
+                print(self.full_name)
+                raise ValueError(self.type.kind.spelling)
+
 
 @dataclass(kw_only=True, frozen=True)
 class ArgWrapper(CursorWrapper):
+    @cached_property
+    def name(self) -> str:
+        return self.cursor.referenced.spelling
+
     @cached_property
     def type(self) -> TypeWrapper:
         return TypeWrapper(arena=self.arena, type=self.cursor.type)
@@ -225,6 +272,13 @@ class Arena:
         return free
 
 
+def show_fn(fn: FunctionProtoWrapper) -> None:
+    print(f"    {fn.zig_name}")
+    for arg in fn.args:
+        print(f"      arg: {arg.name}: {arg.type.zig_type}")
+    print(f"      ret: {fn.return_type.zig_type}")
+
+
 def main(header: str) -> None:
     idx = Index.create()
     tu = idx.parse(header)
@@ -234,14 +288,14 @@ def main(header: str) -> None:
         print(f"class: {td.zig_name}")
         print("  constructors:")
         for cons in td.constructors:
-            print(f"    {cons.zig_name}")
+            show_fn(cons)
         print("  methods:")
         for meth in td.methods:
-            print(f"    {meth.zig_name}")
+            show_fn(meth)
 
     print("Free functions:")
     for fn in arena.free_functions:
-        print(f"  {fn.name}")
+        show_fn(fn)
 
 
 if __name__ == "__main__":
