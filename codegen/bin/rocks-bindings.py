@@ -254,7 +254,7 @@ class Arena:
     @cached_property
     def method_index(self) -> dict[str, list[FunctionProtoWrapper]]:
         index: dict[str, list[FunctionProtoWrapper]] = {}
-        for proto in self.protos:
+        for proto in self.proto_index.values():
             if clazz := proto.affinity:
                 if clazz == proto.method_of:
                     index.setdefault(clazz.name, []).append(proto)
@@ -263,7 +263,7 @@ class Arena:
     @cached_property
     def constructor_index(self) -> dict[str, list[FunctionProtoWrapper]]:
         index: dict[str, list[FunctionProtoWrapper]] = {}
-        for proto in self.protos:
+        for proto in self.proto_index.values():
             if clazz := proto.affinity:
                 if clazz == proto.constructs:
                     index.setdefault(clazz.name, []).append(proto)
@@ -272,7 +272,7 @@ class Arena:
     @cached_property
     def free_functions(self) -> list[FunctionProtoWrapper]:
         free: list[FunctionProtoWrapper] = []
-        for proto in self.protos:
+        for proto in self.proto_index.values():
             if proto.method_of or proto.constructs:
                 continue
             free.append(proto)
@@ -284,7 +284,11 @@ def show_fn(fn: FunctionProtoWrapper) -> None:
     print(f"    pub fn {fn.zig_name}(", end=end)
     for arg in fn.args:
         print(f"{arg.name}: {arg.type.zig_type}, ", end=end)
-    print(f") {fn.return_type.zig_type} {{ unreachable; }}")
+    print(f") {fn.return_type.zig_type} " + "{")
+    for arg in fn.args:
+        print(f"_ = {arg.name};", end=end)
+    print("}")
+
     print()
 
 
