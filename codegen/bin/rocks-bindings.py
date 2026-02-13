@@ -1,11 +1,34 @@
 import re
 from dataclasses import dataclass, field
-from functools import cached_property
+from functools import cached_property, reduce
 from typing import Optional
 
 from clang.cindex import Cursor, Index, Type, TypeKind
 
-HEADER = "../../rocksdb/include/rocksdb/c.h"
+
+def common_prefix(names: list[str]) -> str:
+    def common(a: list[str], b: list[str]) -> list[str]:
+        lim = min(len(a), len(b))
+        for i in range(lim):
+            if a[i] != b[i]:
+                return a[:i]
+        return a[:lim]
+
+    assert len(names) > 0
+    parts = [n.split("_") for n in names]
+    prefix = reduce(common, parts)
+    return "_".join(prefix)
+
+
+def pascal_case(name: str) -> str:
+    return "".join([part.title() for part in name.split("_")])
+
+
+def camel_case(name: str) -> str:
+    if name == "":
+        return name
+    pascal = pascal_case(name)
+    return pascal[0:1].lower() + pascal[1:]
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -29,9 +52,20 @@ class TypedefWrapper(CursorWrapper):
         return self.arena.method_index.get(self.name, [])
 
     @cached_property
-    def prefix(self) -> str:
+    def class_name(self) -> str:
         assert self.name.endswith("_t")
         return self.name[:-1]
+
+    @cached_property
+    def prefix(self) -> Optional[str]:
+        names = [fn.name for fn in (*self.constructors, *self.methods)]
+        if names:
+            return common_prefix(names) + "_"
+        return None
+
+    @cached_property
+    def zig_name(self) -> str:
+        return pascal_case(self.class_name[:-1])
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -102,9 +136,9 @@ class FunctionProtoWrapper(CursorWrapper):
     @cached_property
     def affinity(self) -> Optional[TypedefWrapper]:
         maybe = [clz for clz in (self.constructs, self.method_of) if clz]
-        longest = sorted(maybe, key=lambda x: len(x.prefix), reverse=True)
+        longest = sorted(maybe, key=lambda x: len(x.class_name), reverse=True)
         for clz in longest:
-            if self.name.startswith(clz.prefix):
+            if self.name.startswith(clz.class_name):
                 return clz
         if maybe:
             return maybe[0]
@@ -114,9 +148,16 @@ class FunctionProtoWrapper(CursorWrapper):
     def fn_name(self) -> str:
         name = self.name
         if clz := self.affinity:
-            if name.startswith(clz.prefix):
-                return name[len(clz.prefix) :]
+            prefixes = [name for name in (clz.prefix, clz.class_name) if name]
+            prefixes.sort(key=lambda name: len(name), reverse=True)
+            for prefix in prefixes:
+                if name.startswith(prefix):
+                    return name[len(prefix) :]
         return name
+
+    @cached_property
+    def zig_name(self) -> str:
+        return camel_case(self.fn_name)
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -190,13 +231,13 @@ def main(header: str) -> None:
     arena = Arena()
     arena.scan_source(tu.cursor)
     for td in arena.typedefs:
-        print(f"class: {td.name}")
+        print(f"class: {td.zig_name}")
         print("  constructors:")
         for cons in td.constructors:
-            print(f"    {cons.fn_name}")
+            print(f"    {cons.zig_name}")
         print("  methods:")
         for meth in td.methods:
-            print(f"    {meth.fn_name}")
+            print(f"    {meth.zig_name}")
 
     print("Free functions:")
     for fn in arena.free_functions:
@@ -204,4 +245,4 @@ def main(header: str) -> None:
 
 
 if __name__ == "__main__":
-    main(HEADER)
+    main("../../rocksdb/include/rocksdb/c.h")
