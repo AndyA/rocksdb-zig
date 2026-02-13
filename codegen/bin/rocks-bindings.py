@@ -45,11 +45,16 @@ class CursorWrapper:
 class TypedefWrapper(CursorWrapper):
     @cached_property
     def constructors(self) -> list["FunctionProtoWrapper"]:
-        return self.arena.constructor_index.get(self.name, [])
+        return sorted(
+            self.arena.constructor_index.get(self.name, []),
+            key=lambda fn: fn.name,
+        )
 
     @cached_property
     def methods(self) -> list["FunctionProtoWrapper"]:
-        return self.arena.method_index.get(self.name, [])
+        return sorted(
+            self.arena.method_index.get(self.name, []), key=lambda fn: fn.name
+        )
 
     @cached_property
     def class_name(self) -> str:
@@ -88,7 +93,7 @@ class TypeWrapper:
 
     @cached_property
     def ref(self) -> Optional["TypeWrapper"]:
-        if self.type.kind == TypeKind.POINTER:
+        if self.type.kind == TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
             return TypeWrapper(
                 arena=self.arena,
                 type=self.type.get_pointee(),
@@ -97,7 +102,7 @@ class TypeWrapper:
 
     @cached_property
     def elt(self) -> Optional["TypeWrapper"]:
-        if self.type.kind == TypeKind.INCOMPLETEARRAY:
+        if self.type.kind == TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
             return TypeWrapper(
                 arena=self.arena,
                 type=self.type.get_array_element_type(),
@@ -107,31 +112,31 @@ class TypeWrapper:
     @cached_property
     def zig_type(self) -> str:
         match self.type.kind:
-            case TypeKind.POINTER:
+            case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
                 if self.const:
                     return "*const " + self.ref.zig_type
                 else:
                     return "*" + self.ref.zig_type
-            case TypeKind.ELABORATED:
+            case TypeKind.ELABORATED:  # ty:ignore[unresolved-attribute]
                 if clz := self.arena.typedef_index.get(self.name):
                     return clz.zig_name
                 return self.name
-            case TypeKind.CHAR_S:
+            case TypeKind.CHAR_S:  # ty:ignore[unresolved-attribute]
                 return "i8"
-            case TypeKind.UCHAR:
+            case TypeKind.UCHAR:  # ty:ignore[unresolved-attribute]
                 return "u8"
-            case TypeKind.INT:
+            case TypeKind.INT:  # ty:ignore[unresolved-attribute]
                 return "i64"
-            case TypeKind.UINT:
+            case TypeKind.UINT:  # ty:ignore[unresolved-attribute]
                 return "u64"
-            case TypeKind.INCOMPLETEARRAY:
+            case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
                 return "[*]" + self.elt.zig_type
-            case TypeKind.DOUBLE:
+            case TypeKind.DOUBLE:  # ty:ignore[unresolved-attribute]
                 return "f64"
-            case TypeKind.VOID:
+            case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
                 return "void"
-            case TypeKind.FUNCTIONPROTO:
-                return "fn"  # TODO
+            case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
+                return "u6502"  # TODO
             case _:
                 print(self.full_name)
                 raise ValueError(self.type.kind.spelling)
@@ -139,9 +144,11 @@ class TypeWrapper:
 
 @dataclass(kw_only=True, frozen=True)
 class ArgWrapper(CursorWrapper):
+    index: int
+
     @cached_property
     def name(self) -> str:
-        return self.cursor.referenced.spelling
+        return self.cursor.referenced.spelling or f"arg{self.index}"
 
     @cached_property
     def type(self) -> TypeWrapper:
@@ -157,8 +164,8 @@ class FunctionProtoWrapper(CursorWrapper):
     @cached_property
     def args(self) -> list[ArgWrapper]:
         return [
-            ArgWrapper(arena=self.arena, cursor=cursor)
-            for cursor in self.cursor.get_arguments()
+            ArgWrapper(arena=self.arena, cursor=cursor, index=i)
+            for i, cursor in enumerate(self.cursor.get_arguments())
         ]
 
     @cached_property
@@ -214,7 +221,7 @@ class Arena:
 
     def scan_source(self, cursor: Cursor) -> None:
         match cursor.type.kind:
-            case TypeKind.TYPEDEF:
+            case TypeKind.TYPEDEF:  # ty:ignore[unresolved-attribute]
                 decl = TypedefWrapper(
                     arena=self,
                     cursor=cursor,
@@ -273,10 +280,12 @@ class Arena:
 
 
 def show_fn(fn: FunctionProtoWrapper) -> None:
-    print(f"    {fn.zig_name}")
+    end = "" if len(fn.args) < 2 else "\n      "
+    print(f"    pub fn {fn.zig_name}(", end=end)
     for arg in fn.args:
-        print(f"      arg: {arg.name}: {arg.type.zig_type}")
-    print(f"      ret: {fn.return_type.zig_type}")
+        print(f"{arg.name}: {arg.type.zig_type}, ", end=end)
+    print(f") {fn.return_type.zig_type} {{ unreachable; }}")
+    print()
 
 
 def main(header: str) -> None:
@@ -284,16 +293,20 @@ def main(header: str) -> None:
     tu = idx.parse(header)
     arena = Arena()
     arena.scan_source(tu.cursor)
-    for td in arena.typedefs:
-        print(f"class: {td.zig_name}")
-        print("  constructors:")
-        for cons in td.constructors:
-            show_fn(cons)
-        print("  methods:")
-        for meth in td.methods:
-            show_fn(meth)
+    for td in arena.typedef_index.values():
+        print(f"// {td.name}")
+        print(f"pub const {td.zig_name} = struct " + "{")
+        if td.constructors:
+            print("// constructors:")
+            for cons in td.constructors:
+                show_fn(cons)
+        if td.methods:
+            print("// methods:")
+            for meth in td.methods:
+                show_fn(meth)
+        print("};\n")
 
-    print("Free functions:")
+    print("// Free functions:")
     for fn in arena.free_functions:
         show_fn(fn)
 
