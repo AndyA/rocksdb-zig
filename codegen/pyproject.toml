@@ -1,0 +1,9 @@
+[project]
+name = "codegen"
+version = "0.1.0"
+description = "Generate Zig bindings for RocksDB's C API"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "libclang>=18.1.1",
+]
