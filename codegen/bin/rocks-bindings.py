@@ -113,10 +113,11 @@ class TypeWrapper:
     def zig_type(self) -> str:
         match self.type.kind:
             case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
-                if self.const:
-                    return "*const " + self.ref.zig_type
-                else:
-                    return "*" + self.ref.zig_type
+                if ref := self.ref:
+                    if self.const:
+                        return "*const " + ref.zig_type
+                    else:
+                        return "*" + ref.zig_type
             case TypeKind.ELABORATED:  # ty:ignore[unresolved-attribute]
                 if clz := self.arena.typedef_index.get(self.name):
                     return clz.zig_name
@@ -130,7 +131,8 @@ class TypeWrapper:
             case TypeKind.UINT:  # ty:ignore[unresolved-attribute]
                 return "u64"
             case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
-                return "[*]" + self.elt.zig_type
+                if elt := self.elt:
+                    return "[*]" + elt.zig_type
             case TypeKind.DOUBLE:  # ty:ignore[unresolved-attribute]
                 return "f64"
             case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
@@ -140,6 +142,8 @@ class TypeWrapper:
             case _:
                 print(self.full_name)
                 raise ValueError(self.type.kind.spelling)
+
+        raise ValueError(f"Unsupported type: {self.full_name}")
 
 
 @dataclass(kw_only=True, frozen=True)
