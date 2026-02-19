@@ -295,8 +295,10 @@ def show_fn(fn: FunctionProtoWrapper) -> None:
     for arg in fn.args:
         print(f"{arg.name}: {arg.type.zig_type}, ")
     print(f") {fn.return_type.zig_type} " + "{")
+    print(f"rdb.{fn.name}(")
     for arg in fn.args:
-        print(f"_ = {arg.name};")
+        print(f"{arg.name},")
+    print(");")
     print("}")
 
     print()
@@ -307,6 +309,7 @@ def main(header: str) -> None:
     tu = idx.parse(header)
     arena = Arena()
     arena.scan_source(tu.cursor)
+    print('const rdb = @import("rocksdb");\n')
     for td in arena.typedef_index.values():
         print(f"// {td.name}")
         print(f"pub const {td.zig_name} = struct " + "{")
