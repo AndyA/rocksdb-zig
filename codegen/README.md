@@ -5,3 +5,37 @@
 - slice -> sentinel term string
 - error handling
 - callback shims
+- thunk between wrapper structs and RockDB handles
+- is `unsigned char` always `bool`?
+- handle array of slices (e.g. `rocksdb_approximate_sizes`)
+- handle SoA args (e.g. `rocksdb_open_for_read_only_column_families`)
+
+# Bugs
+
+- why is everything const?
+
+# Thinks
+
+- do we need targetted overrides? If so, how do they work?
+
+```python
+hint(
+    fns=[
+        "rocksdb_open_for_read_only_column_families",
+        "rocksdb_open_column_families_with_ttl",
+    ],
+    shim="SoA",
+    args={
+        "count": "num_column_families",
+        "slices": [
+            "column_family_names",
+            "column_family_options",
+            "column_family_handles",
+        ],
+    },
+)
+```
+
+We could use the above hint mechanism with some additional auto-discovery for all arg mappings - e.g. find all the functions that have `foo: *const i8, foo_len: i64` and wire an appropriate hint for them.
+
+If necessary we could repeatedly apply all the hints for each function until a fixed point is reached.
