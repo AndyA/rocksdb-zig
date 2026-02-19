@@ -106,6 +106,15 @@ class TypeWrapper:
             return TypeWrapper(arena=self.arena, type=ref)
         return None
 
+    def _fn_rep(self) -> None:
+        arg_types = [
+            TypeWrapper(arena=self.arena, type=type)
+            for type in self.type.argument_types()
+        ]
+        ret_type = TypeWrapper(arena=self.arena, type=self.type.get_result())
+        args = ", ".join([arg.zig_type for arg in arg_types])
+        return f"fn ({args}) {ret_type.zig_type}"
+
     @cached_property
     def zig_type(self) -> str:
         match self.type.kind:
@@ -135,7 +144,7 @@ class TypeWrapper:
             case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
                 return "void"
             case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
-                return "u6502"  # TODO
+                return self._fn_rep()
             case _:
                 print(self.full_name)
                 raise ValueError(self.type.kind.spelling)
