@@ -266,7 +266,7 @@ class Arena:
         index: dict[str, list[FunctionProtoWrapper]] = {}
         for proto in self.proto_index.values():
             if clazz := proto.affinity:
-                if clazz == proto.method_of:
+                if clazz == proto.method_of and clazz != proto.constructs:
                     index.setdefault(clazz.name, []).append(proto)
         return index
 
