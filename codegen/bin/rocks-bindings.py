@@ -88,25 +88,22 @@ class TypeWrapper:
         return re.sub(r"^const\s+", "", self.full_name)
 
     def const(self) -> bool:
-        return self.full_name.startswith("const ")
-        # return self.type.is_const_qualified()
+        # return self.full_name.startswith("const ")
+        return self.type.is_const_qualified()
+
+    def _ref(self) -> Optional[Type]:
+        match self.type.kind:
+            case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
+                return self.type.get_pointee()
+            case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
+                return self.type.get_array_element_type()
+            case _:
+                return None
 
     @cached_property
     def ref(self) -> Optional["TypeWrapper"]:
-        if self.type.kind == TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
-            return TypeWrapper(
-                arena=self.arena,
-                type=self.type.get_pointee(),
-            )
-        return None
-
-    @cached_property
-    def elt(self) -> Optional["TypeWrapper"]:
-        if self.type.kind == TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
-            return TypeWrapper(
-                arena=self.arena,
-                type=self.type.get_array_element_type(),
-            )
+        if ref := self._ref():
+            return TypeWrapper(arena=self.arena, type=ref)
         return None
 
     @cached_property
@@ -131,8 +128,8 @@ class TypeWrapper:
             case TypeKind.UINT:  # ty:ignore[unresolved-attribute]
                 return "u64"
             case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
-                if elt := self.elt:
-                    return "[*]" + elt.zig_type
+                if ref := self.ref:
+                    return "[*]" + ref.zig_type
             case TypeKind.DOUBLE:  # ty:ignore[unresolved-attribute]
                 return "f64"
             case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
