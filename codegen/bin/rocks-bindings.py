@@ -106,7 +106,7 @@ class TypeWrapper:
             return TypeWrapper(arena=self.arena, type=ref)
         return None
 
-    def _fn_rep(self) -> None:
+    def _fn_rep(self) -> str:
         arg_types = [
             TypeWrapper(arena=self.arena, type=type)
             for type in self.type.argument_types()

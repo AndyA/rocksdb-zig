@@ -3,7 +3,7 @@
 - slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
-- error handling
+- error handling (`errstr`)
 - callback shims
 - thunk between wrapper structs and RockDB handles
 - is `unsigned char` always `bool`?
@@ -27,9 +27,12 @@ rule(
     },
 )
 
-def parallel_arrays(fn: Fn, *, count: str, arrays: list[str]) -> Optional[Fn]:
-  # TODO handle parallel arrays
-  return None
+
+def parallel_arrays(
+    ctx: Context, fn: Fn, *, count: str, arrays: list[str]
+) -> Optional[Fn]:
+    # TODO handle parallel arrays
+    return None
 
 ```
 
