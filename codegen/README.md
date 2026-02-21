@@ -37,10 +37,6 @@ def parallel_arrays(
 
 ```
 
-We could use the above hint mechanism with some additional auto-discovery for all arg mappings - e.g. find all the functions that have `foo: *const i8, foo_len: i64` and wire an appropriate hint for them.
-
-If necessary we could repeatedly apply all the hints for each function until a fixed point is reached.
-
 # Bugs
 
 - why is everything const?
