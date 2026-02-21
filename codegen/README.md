@@ -9,7 +9,7 @@
 - thunk between wrapper structs and RockDB handles
 - is `unsigned char` always `bool`?
 - handle array of slices (e.g. `rocksdb_approximate_sizes`)
-- handle SoA args (e.g. `rocksdb_open_for_read_only_column_families`)
+- handle parallel array args (e.g. `rocksdb_open_for_read_only_column_families`)
 
 ```python
 rule(
