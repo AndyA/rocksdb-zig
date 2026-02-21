@@ -1,4 +1,4 @@
-# TODO
+# Thinks
 
 - slice -> `char *, i64`
 - sentinel term strings -> slice
@@ -9,14 +9,6 @@
 - is `unsigned char` always `bool`?
 - handle array of slices (e.g. `rocksdb_approximate_sizes`)
 - handle SoA args (e.g. `rocksdb_open_for_read_only_column_families`)
-
-# Bugs
-
-- why is everything const?
-
-# Thinks
-
-- do we need targetted overrides? If so, how do they work?
 
 ```python
 rule(
@@ -35,7 +27,7 @@ rule(
     },
 )
 
-def parallel_arrays(fn: Fn, *, count: str, slices: list[str]) -> Optional[Fn]:
+def parallel_arrays(fn: Fn, *, count: str, arrays: list[str]) -> Optional[Fn]:
   # TODO handle parallel arrays
   return None
 
@@ -44,3 +36,7 @@ def parallel_arrays(fn: Fn, *, count: str, slices: list[str]) -> Optional[Fn]:
 We could use the above hint mechanism with some additional auto-discovery for all arg mappings - e.g. find all the functions that have `foo: *const i8, foo_len: i64` and wire an appropriate hint for them.
 
 If necessary we could repeatedly apply all the hints for each function until a fixed point is reached.
+
+# Bugs
+
+- why is everything const?
