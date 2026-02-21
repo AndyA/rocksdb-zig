@@ -1,6 +1,6 @@
 # TODO
 
-- slice -> char \*, i64
+- slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
 - error handling
@@ -19,21 +19,26 @@
 - do we need targetted overrides? If so, how do they work?
 
 ```python
-hint(
+rule(
     fns=[
         "rocksdb_open_for_read_only_column_families",
         "rocksdb_open_column_families_with_ttl",
     ],
-    shim="SoA",
+    strategy=parallel_arrays,
     args={
         "count": "num_column_families",
-        "slices": [
+        "arrays": [
             "column_family_names",
             "column_family_options",
             "column_family_handles",
         ],
     },
 )
+
+def parallel_arrays(fn: Fn, *, count: str, slices: list[str]) -> Optional[Fn]:
+  # TODO handle parallel arrays
+  return None
+
 ```
 
 We could use the above hint mechanism with some additional auto-discovery for all arg mappings - e.g. find all the functions that have `foo: *const i8, foo_len: i64` and wire an appropriate hint for them.
