@@ -4,7 +4,7 @@
 - slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
-- error handling (`errstr`)
+- error handling (`errptr`)
 - callback shims
 - thunk between wrapper structs and RockDB handles
 - is `unsigned char` always `bool`?
