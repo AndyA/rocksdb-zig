@@ -1,5 +1,6 @@
 # Thinks
 
+- unshadow args (`destroy` -> `destroy_`)
 - slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
