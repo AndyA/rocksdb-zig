@@ -1,12 +1,16 @@
+# Bugs
+
+- why is everything const?
+
 # Thinks
 
 - unshadow args (`destroy` -> `destroy_`)
+- thunk between wrapper structs and RockDB handles
 - slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
 - error handling (`errptr`)
 - callback shims
-- thunk between wrapper structs and RockDB handles
 - is `unsigned char` always `bool`?
 - handle array of slices (e.g. `rocksdb_approximate_sizes`)
 - handle parallel array args (e.g. `rocksdb_open_for_read_only_column_families`)
@@ -36,7 +40,3 @@ def parallel_arrays(
     return None
 
 ```
-
-# Bugs
-
-- why is everything const?
