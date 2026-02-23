@@ -45,18 +45,6 @@ class FnType(BaseType):
     ret_type: "SysType"
 
 
-@dataclass(kw_only=True, frozen=True)
-class FnNamedArgsType(FnType):
-    arg_names: list[str]
-
-
 type SysType = (
-    VoidType
-    | IntType
-    | FloatType
-    | PointerType
-    | ArrayType
-    | ExtType
-    | FnType
-    | FnNamedArgsType
+    VoidType | IntType | FloatType | PointerType | ArrayType | ExtType | FnType
 )
