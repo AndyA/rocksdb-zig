@@ -121,11 +121,10 @@ class Arena:
                 case TypeKind.TYPEDEF:  # ty:ignore[unresolved-attribute]
                     handles.add(cursor.spelling)
                 case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
-                    name: str = cursor.spelling
                     fn = parse_clang_type(cursor.type)
                     assert isinstance(fn, FnType)
                     arg_names = tuple(arg.spelling for arg in cursor.get_arguments())
-                    fndefs.append((name, fn, arg_names))
+                    fndefs.append((cursor.spelling, fn, arg_names))
                 case _:
                     for child in cursor.get_children():
                         scan(child)
