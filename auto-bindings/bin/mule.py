@@ -16,9 +16,9 @@ from codegen.typesys import (
 )
 
 
-def parse_clang_type(type: Type) -> SysType:
-    is_const = type.is_const_qualified()
-    match type.kind:
+def parse_clang_type(ct: Type) -> SysType:
+    is_const = ct.is_const_qualified()
+    match ct.kind:
         case TypeKind.CHAR_S:  # ty:ignore[unresolved-attribute]
             return IntType(is_const=is_const, signed=True, bits=8)
         case TypeKind.UCHAR | TypeKind.CHAR_U:  # ty:ignore[unresolved-attribute]
@@ -36,32 +36,32 @@ def parse_clang_type(type: Type) -> SysType:
         case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
             return PointerType(
                 is_const=is_const,
-                ref_type=parse_clang_type(type.get_pointee()),
+                ref_type=parse_clang_type(ct.get_pointee()),
             )
         case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
             return FnType(
                 is_const=is_const,
-                arg_types=[parse_clang_type(t) for t in type.argument_types()],
-                ret_type=parse_clang_type(type.get_result()),
+                arg_types=[parse_clang_type(t) for t in ct.argument_types()],
+                ret_type=parse_clang_type(ct.get_result()),
             )
         case TypeKind.ELABORATED:  # ty:ignore[unresolved-attribute]
             return ExtType(
                 is_const=is_const,
-                name=re.sub(r"^const\s+", "", type.spelling),
+                name=re.sub(r"^const\s+", "", ct.spelling),
             )
         case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
             return ArrayType(
                 is_const=is_const,
-                child_type=parse_clang_type(type.get_array_element_type()),
+                child_type=parse_clang_type(ct.get_array_element_type()),
             )
         case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
             return VoidType(is_const=is_const)
         case _:
-            raise ValueError(f"Bad type {type.spelling} ({type.kind.value})")
+            raise ValueError(f"Bad type {ct.spelling} ({ct.kind.value})")
 
 
-def refers_to(t: SysType) -> Optional[str]:
-    match t:
+def refers_to(st: SysType) -> Optional[str]:
+    match st:
         case ExtType(name=name):
             return name
         case PointerType(ref_type=ExtType(name=name)):
