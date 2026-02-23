@@ -88,7 +88,7 @@ class Fn:
         if cons := self.arena.refs(self.fn.ret_type):
             possible.append(cons)
         # Match against the longest handle type name
-        longest = sorted(possible, key=lambda s: len(s), reverse=True)
+        longest = sorted(possible, key=lambda s: (len(s), s), reverse=True)
         for name in longest:
             if name.endswith("_t"):
                 if self.name.startswith(name[:-1]):
