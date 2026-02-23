@@ -1,5 +1,5 @@
 [project]
-name = "codegen"
+name = "auto-bindings"
 version = "0.1.0"
 description = "Generate Zig bindings for RocksDB's C API"
 readme = "README.md"

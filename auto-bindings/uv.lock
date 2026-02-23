@@ -10,8 +10,16 @@ dependencies = [
     { name = "libclang" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "codegen" },
+]
+
 [package.metadata]
 requires-dist = [{ name = "libclang", specifier = ">=18.1.1" }]
+
+[package.metadata.requires-dev]
+dev = [{ name = "codegen", virtual = "." }]
 
 [[package]]
 name = "libclang"

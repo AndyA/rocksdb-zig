@@ -115,18 +115,15 @@ class TypeWrapper:
         args = ", ".join([arg.zig_type for arg in arg_types])
         return f"fn ({args}) {ret_type.zig_type}"
 
-    @cached_property
-    def zig_type(self) -> str:
+    def _type(self) -> str:
         match self.type.kind:
             case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
                 if ref := self.ref:
-                    if self.const:
-                        return "*const " + ref.zig_type
-                    else:
-                        return "*" + ref.zig_type
+                    return "*" + ref.zig_type
+                assert False
             case TypeKind.ELABORATED:  # ty:ignore[unresolved-attribute]
-                if clz := self.arena.typedef_index.get(self.name):
-                    return clz.zig_name
+                # if clz := self.arena.typedef_index.get(self.name):
+                #     return clz.zig_name
                 return self.name
             case TypeKind.CHAR_S:  # ty:ignore[unresolved-attribute]
                 return "i8"
@@ -150,6 +147,14 @@ class TypeWrapper:
                 raise ValueError(self.type.kind.spelling)
 
         raise ValueError(f"Unsupported type: {self.full_name}")
+
+    @cached_property
+    def zig_type(self) -> str:
+        rep = self._type()
+        if self.const:
+            return "const " + rep
+        else:
+            return rep
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -326,6 +331,11 @@ def main(header: str) -> None:
     print("// Free functions:")
     for fn in arena.free_functions:
         show_fn(fn)
+
+    if False:
+        import code
+
+        code.InteractiveConsole(locals=locals()).interact()
 
 
 if __name__ == "__main__":

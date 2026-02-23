@@ -15,13 +15,12 @@ def common_prefix(names: list[str]) -> str:
     return "_".join(prefix)
 
 
-names = [
-    "rocksdb_approximate_memory_usage_destroy",
-    "rocksdb_approximate_memory_usage_get_mem_table_total",
-    "rocksdb_approximate_memory_usage_get_mem_table_unflushed",
-    "rocksdb_approximate_memory_usage_get_mem_table_readers_total",
-    "rocksdb_approximate_memory_usage_get_cache_total",
-]
+def pascal_case(name: str) -> str:
+    return "".join([part.title() for part in name.split("_")])
 
 
-print(common_prefix(names))
+def camel_case(name: str) -> str:
+    if name == "":
+        return name
+    pascal = pascal_case(name)
+    return pascal[0:1].lower() + pascal[1:]
