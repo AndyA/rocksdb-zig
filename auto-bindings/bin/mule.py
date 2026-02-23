@@ -61,19 +61,24 @@ def parse_clang_type(type: Type) -> SysType:
 
 
 @dataclass(kw_only=True, frozen=True)
-class Bindings:
-    typedefs: list[str]
+class Fn:
+    arena: "Arena"
+
+
+@dataclass(kw_only=True, frozen=True)
+class Arena:
+    typedefs: set[str]
     functions: dict[str, FnNamedArgsType]
 
     @classmethod
     def from_cursor(cls, cursor: Cursor) -> Self:
-        typedefs: list[str] = []
+        typedefs: set[str] = set()
         functions: dict[str, FnNamedArgsType] = {}
 
         def scan(cursor: Cursor) -> None:
             match cursor.type.kind:
                 case TypeKind.TYPEDEF:  # ty:ignore[unresolved-attribute]
-                    typedefs.append(cursor.spelling)
+                    typedefs.add(cursor.spelling)
                 case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
                     name = cursor.spelling
                     fn = parse_clang_type(cursor.type)
@@ -119,7 +124,7 @@ def scan_source(cursor: Cursor) -> None:
 def main(header: str) -> None:
     idx = Index.create()
     tu = idx.parse(header)
-    bindings = Bindings.from_cursor(tu.cursor)
+    bindings = Arena.from_cursor(tu.cursor)
     print(bindings.functions)
 
 
