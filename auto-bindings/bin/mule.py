@@ -60,8 +60,8 @@ def parse_clang_type(type: Type) -> SysType:
             raise ValueError(f"Bad type {type.spelling} ({type.kind.value})")
 
 
-def refers_to(systype: SysType) -> Optional[str]:
-    match systype:
+def refers_to(t: SysType) -> Optional[str]:
+    match t:
         case ExtType(name=name):
             return name
         case PointerType(ref_type=ExtType(name=name)):
