@@ -130,7 +130,7 @@ class TypeWrapper:
                 return self.name
             case TypeKind.CHAR_S:  # ty:ignore[unresolved-attribute]
                 return "i8"
-            case TypeKind.UCHAR:  # ty:ignore[unresolved-attribute]
+            case TypeKind.UCHAR | TypeKind.CHAR_U:  # ty:ignore[unresolved-attribute]
                 return "u8"
             case TypeKind.INT:  # ty:ignore[unresolved-attribute]
                 return "i64"
