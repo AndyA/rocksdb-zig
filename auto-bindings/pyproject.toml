@@ -5,5 +5,14 @@ description = "Generate Zig bindings for RocksDB's C API"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "codegen",
     "libclang>=18.1.1",
 ]
+
+[tool.uv.workspace]
+members = [
+    "codegen",
+]
+
+[tool.uv.sources]
+codegen = { workspace = true, editable = true }

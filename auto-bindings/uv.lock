@@ -2,24 +2,31 @@ version = 1
 revision = 3
 requires-python = ">=3.14"
 
+[manifest]
+members = [
+    "auto-bindings",
+    "codegen",
+]
+
 [[package]]
-name = "codegen"
+name = "auto-bindings"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "codegen" },
     { name = "libclang" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "codegen" },
+[package.metadata]
+requires-dist = [
+    { name = "codegen", editable = "codegen" },
+    { name = "libclang", specifier = ">=18.1.1" },
 ]
 
-[package.metadata]
-requires-dist = [{ name = "libclang", specifier = ">=18.1.1" }]
-
-[package.metadata.requires-dev]
-dev = [{ name = "codegen", virtual = "." }]
+[[package]]
+name = "codegen"
+version = "0.1.0"
+source = { editable = "codegen" }
 
 [[package]]
 name = "libclang"
