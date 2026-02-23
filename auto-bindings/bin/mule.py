@@ -80,13 +80,13 @@ class Fn:
     @cached_property
     def belongs_to(self) -> Optional[str]:
         possible = []
+        # Does it construct a handle?
+        if cons := self.arena.refs(self.fn.ret_type):
+            possible.append(cons)
         # Does it take a handle as its first argument?
         if len(self.fn.arg_types) > 0:
             if this := self.arena.refs(self.fn.arg_types[0]):
                 possible.append(this)
-        # Does it construct a handle?
-        if cons := self.arena.refs(self.fn.ret_type):
-            possible.append(cons)
         # Match against the longest handle type name
         longest = sorted(possible, key=lambda s: (len(s), s), reverse=True)
         for name in longest:
