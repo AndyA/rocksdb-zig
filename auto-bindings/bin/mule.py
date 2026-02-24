@@ -4,13 +4,13 @@ from functools import cached_property
 from typing import Optional, Self
 
 from clang.cindex import Cursor, Index, Type, TypeKind
-from codegen.tools import common_prefix
+from codegen.tools import camel_case, common_prefix, pascal_case
 from codegen.typesys import (
-    ArrayType,
     ExtType,
     FloatType,
     FnType,
     IntType,
+    PointerSize,
     PointerType,
     SysType,
     VoidType,
@@ -37,7 +37,8 @@ def parse_clang_type(ct: Type) -> SysType:
         case TypeKind.POINTER:  # ty:ignore[unresolved-attribute]
             return PointerType(
                 is_const=is_const,
-                ref_type=parse_clang_type(ct.get_pointee()),
+                child=parse_clang_type(ct.get_pointee()),
+                size=PointerSize.C,
             )
         case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
             return FnType(
@@ -45,15 +46,16 @@ def parse_clang_type(ct: Type) -> SysType:
                 arg_types=[parse_clang_type(t) for t in ct.argument_types()],
                 ret_type=parse_clang_type(ct.get_result()),
             )
+        case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
+            return PointerType(
+                is_const=is_const,
+                child=parse_clang_type(ct.get_array_element_type()),
+                size=PointerSize.MANY,
+            )
         case TypeKind.ELABORATED:  # ty:ignore[unresolved-attribute]
             return ExtType(
                 is_const=is_const,
                 name=re.sub(r"^const\s+", "", ct.spelling),
-            )
-        case TypeKind.INCOMPLETEARRAY:  # ty:ignore[unresolved-attribute]
-            return ArrayType(
-                is_const=is_const,
-                child_type=parse_clang_type(ct.get_array_element_type()),
             )
         case TypeKind.VOID:  # ty:ignore[unresolved-attribute]
             return VoidType(is_const=is_const)
@@ -61,55 +63,126 @@ def parse_clang_type(ct: Type) -> SysType:
             raise ValueError(f"Bad type {ct.spelling} ({ct.kind.value})")
 
 
-def render_zig_type(t: SysType) -> str:
-    def render(t: SysType) -> str:
-        match t:
-            case IntType(bits=bits, signed=False):
-                return f"u{bits}"
-            case IntType(bits=bits, signed=True):
-                return f"i{bits}"
-            case FloatType(bits=bits):
-                return f"f{bits}"
-            case VoidType():
-                return "anyopaque"
-            case ExtType(name=name):
-                return name
-            case _:
-                raise ValueError(f"Can't zig {t}")
+def render_zig_type_no_const(t: SysType) -> str:
+    match t:
+        case IntType(bits=bits, signed=False):
+            return f"u{bits}"
+        case IntType(bits=bits, signed=True):
+            return f"i{bits}"
+        case FloatType(bits=bits):
+            return f"f{bits}"
+        case VoidType():
+            return "void"
+        case ExtType(name=name):
+            return f"api.{name}"
+        case FnType(arg_types=arg_types, ret_type=ret_type):
+            args = ", ".join([render_zig_type(t) for t in arg_types])
+            ret = render_zig_type(ret_type)
+            return f"fn ({args},) {ret} "
+        case PointerType(ref_type=VoidType(is_const=is_const)):
+            if is_const:
+                return "*const anyopaque"
+            else:
+                return "*anyopaque"
+        case PointerType(child=child, sentinel=None):
+            match t.size:
+                case PointerSize.C:
+                    return "[*c]" + render_zig_type(child)
+                case PointerSize.ONE:
+                    return "*" + render_zig_type(child)
+                case PointerSize.MANY:
+                    return "[*]" + render_zig_type(child)
+                case PointerSize.SLICE:
+                    return "[]" + render_zig_type(child)
+        case PointerType(child=child, sentinel=sentinel):
+            match t.size:
+                case PointerSize.MANY:
+                    return f"[*:{sentinel}]" + render_zig_type(child)
+                case PointerSize.SLICE:
+                    return f"[:{sentinel}]" + render_zig_type(child)
 
+    raise ValueError(f"Can't zig {t}")
+
+
+def render_zig_type(t: SysType) -> str:
     if t.is_const:
-        return "const " + render(t)
+        return "const " + render_zig_type_no_const(t)
     else:
-        return render(t)
+        return render_zig_type_no_const(t)
 
 
 def refers_to(st: SysType) -> Optional[str]:
     match st:
         case ExtType(name=name):
             return name
-        case PointerType(ref_type=ExtType(name=name)):
+        case PointerType(child=ExtType(name=name)):
             return name
         case _:
             return None
 
 
+def comma_if_longer(source: str, maxlen: int) -> str:
+    if len(source) < maxlen:
+        return source
+    return source + ","
+
+
 @dataclass(kw_only=True, frozen=True)
+class ZigArg:
+    name: str
+    arg_type: SysType
+
+    def render_zig(self) -> str:
+        return self.name + ": " + render_zig_type_no_const(self.arg_type)
+
+
+@dataclass(kw_only=True, frozen=True)
+class ArgGroup:
+    zig_args: list[ZigArg]
+    api_args: list[str]
+
+
+type FnDef = tuple[str, FnType, tuple[str, ...]]
+
+
+@dataclass(kw_only=True)
 class Fn:
     arena: "Arena"
     name: str
-    arg_names: tuple[str, ...]
-    fn: FnType
+    args: list[ArgGroup]
+    ret_type: SysType
+    public: bool = True
+
+    @classmethod
+    def from_fndef(cls, *, arena: "Arena", fndef: FnDef):
+        name, fn, arg_names = fndef
+        assert len(arg_names) == len(fn.arg_types)
+        args = [
+            ArgGroup(
+                zig_args=[ZigArg(name=arg_name, arg_type=arg_type)],
+                api_args=[arg_name],
+            )
+            for arg_name, arg_type in zip(arg_names, fn.arg_types)
+        ]
+        return cls(arena=arena, name=name, args=args, ret_type=fn.ret_type)
+
+    def first_arg_type(self) -> Optional[SysType]:
+        if len(self.args) == 0:
+            return None
+        if len(self.args[0].zig_args) == 0:
+            return None
+        return self.args[0].zig_args[0].arg_type
 
     @cached_property
     def belongs_to(self) -> str:
         possible = []
         # Does it construct a handle?
-        if cons := self.arena.refs(self.fn.ret_type):
+        if cons := self.arena.refs(self.ret_type):
             possible.append(cons)
 
         # Does it take a handle as its first argument?
-        if len(self.fn.arg_types) > 0:
-            if this := self.arena.refs(self.fn.arg_types[0]):
+        if this_type := self.first_arg_type():
+            if this := self.arena.refs(this_type):
                 possible.append(this)
 
         # Match against the longest handle type name
@@ -145,10 +218,31 @@ class Fn:
 
         return self.name
 
+    @cached_property
+    def zig_name(self) -> str:
+        return camel_case(self.local_name)
 
-@dataclass(kw_only=True, frozen=True)
+    def render_zig(self) -> str:
+        pub = "pub " if self.public else ""
+        fn_args = comma_if_longer(
+            ", ".join([arg.render_zig() for ag in self.args for arg in ag.zig_args]),
+            70 - len(self.zig_name),
+        )
+        call_args = comma_if_longer(
+            ", ".join([arg for ag in self.args for arg in ag.api_args]),
+            70 - len(self.name),
+        )
+        ret = render_zig_type_no_const(self.ret_type)
+        hdr = f"{pub}fn {self.zig_name}({fn_args}) {ret} " + "{"
+        call = f"api.{self.name}({call_args});"
+        ftr = "}"
+        return f"{hdr}\n{call}\n{ftr}"
+
+
+@dataclass(kw_only=True)
 class Struct:
     arena: "Arena"
+    name: str
     fns: list[Fn]
 
     @cached_property
@@ -156,11 +250,33 @@ class Struct:
         names = [fn.name for fn in self.fns]
         return common_prefix(names)
 
+    @cached_property
+    def base_name(self) -> str:
+        if self.name.endswith("_t"):
+            return self.name[:-2]
+        return self.name
+
+    @cached_property
+    def is_free(self) -> bool:
+        return self.name == "_"
+
+    @cached_property
+    def zig_name(self) -> str:
+        if self.is_free:
+            return self.name
+        return pascal_case(self.base_name)
+
+    def render_zig(self) -> str:
+        body = "\n".join([fn.render_zig() for fn in self.fns])
+        if self.is_free:
+            return f"{body}\n"
+        return f"pub const {self.zig_name} = struct " + "{\n" + body + "};\n"
+
 
 @dataclass(kw_only=True, frozen=True)
 class Arena:
     handles: set[str]
-    fndefs: list[tuple[str, FnType, tuple[str, ...]]]
+    fndefs: list[FnDef]
 
     def refs(self, systype: SysType) -> Optional[str]:
         if ref := refers_to(systype):
@@ -171,15 +287,13 @@ class Arena:
     @classmethod
     def from_cursor(cls, cursor: Cursor) -> Self:
         handles: set[str] = set()
-        fndefs: list[tuple[str, FnType, tuple[str, ...]]] = []
+        fndefs: list[FnDef] = []
 
         def safe_name(cursor: Cursor, index: int) -> str:
-            name = cursor.spelling
-            if isinstance(name, str):
-                if len(name):
-                    return name
-                return f"arg{index}"
-            assert False
+            name = str(cursor.spelling)
+            if len(name):
+                return name
+            return f"arg{index}"
 
         def scan(cursor: Cursor) -> None:
             match cursor.type.kind:
@@ -192,7 +306,7 @@ class Arena:
                         safe_name(arg, i)
                         for i, arg in enumerate(cursor.get_arguments())
                     )
-                    fndefs.append((safe_name(cursor, 0), fn, arg_names))
+                    fndefs.append((str(cursor.spelling), fn, arg_names))
                 case _:
                     for child in cursor.get_children():
                         scan(child)
@@ -203,27 +317,34 @@ class Arena:
 
     @cached_property
     def fns(self) -> list[Fn]:
-        return [
-            Fn(arena=self, name=name, arg_names=arg_names, fn=fn)
-            for name, fn, arg_names in self.fndefs
-        ]
+        return [Fn.from_fndef(arena=self, fndef=fndef) for fndef in self.fndefs]
 
     @cached_property
     def structs(self) -> dict[str, Struct]:
         idx: dict[str, list[Fn]] = {}
         for fn in self.fns:
             idx.setdefault(fn.belongs_to, []).append(fn)
-        return {name: Struct(arena=self, fns=fns) for name, fns in idx.items()}
+        return {
+            name: Struct(
+                arena=self,
+                name=name,
+                fns=fns,
+            )
+            for name, fns in idx.items()
+        }
+
+    def render_zig(self) -> str:
+        body = "\n".join(
+            [self.structs[name].render_zig() for name in sorted(self.structs.keys())]
+        )
+        return f'const api = @import("rocksdb");\n\n{body}'
 
 
 def main(header: str) -> None:
     idx = Index.create()
     tu = idx.parse(header)
-    bindings = Arena.from_cursor(tu.cursor)
-    for name, struct in bindings.structs.items():
-        print(f"{name}:")
-        for fn in sorted(struct.fns, key=lambda f: f.name):
-            print(f"  {fn.local_name}({', '.join(fn.arg_names)}) -> {fn.fn.ret_type}")
+    arena = Arena.from_cursor(tu.cursor)
+    print(arena.render_zig())
 
 
 if __name__ == "__main__":

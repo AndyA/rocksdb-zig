@@ -1,6 +1,7 @@
 """A simple representation of C/C++/Zig types for code generation"""
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
 
 
@@ -25,14 +26,23 @@ class FloatType(BaseType):
     bits: int
 
 
-@dataclass(kw_only=True, frozen=True)
-class PointerType(BaseType):
-    ref_type: "SysType"
+class PointerSize(Enum):
+    ONE = 1
+    MANY = 2
+    SLICE = 3
+    C = 4
 
 
 @dataclass(kw_only=True, frozen=True)
 class ArrayType(BaseType):
-    child_type: "SysType"
+    child: "SysType"
+    sentinel: Optional[int] = None
+
+
+@dataclass(kw_only=True, frozen=True)
+class PointerType(BaseType):
+    child: "SysType"
+    size: PointerSize = PointerSize.C
     sentinel: Optional[int] = None
 
 
