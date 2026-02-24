@@ -4,8 +4,7 @@ from functools import cached_property
 from typing import Optional, Self
 
 from clang.cindex import Cursor, Index, Type, TypeKind
-from codegen.tools import camel_case, common_prefix, pascal_case
-from codegen.typesys import (
+from codegen.systype import (
     ExtType,
     FloatType,
     FnType,
@@ -15,6 +14,7 @@ from codegen.typesys import (
     SysType,
     VoidType,
 )
+from codegen.tools import camel_case, common_prefix, pascal_case
 
 
 def parse_clang_type(ct: Type) -> SysType:
@@ -141,6 +141,20 @@ class ArgGroup:
     zig_args: list[ZigArg]
     api_args: list[str]
 
+    def split(self, index: int) -> list["ArgGroup"]:
+        size = len(self.zig_args)
+        if size != len(self.api_args):
+            raise ValueError("Can't split a non-rectangular ArgGroup")
+        if index < 0 or index > size:
+            raise ValueError(f"Index {index} out of range 0 - {size}")
+        if index == 0 or index == size:
+            return [self]
+
+        return [
+            ArgGroup(zig_args=self.zig_args[0:index], api_args=self.api_args[0:index]),
+            ArgGroup(zig_args=self.zig_args[index:], api_args=self.api_args[index:]),
+        ]
+
 
 type FnDef = tuple[str, FnType, tuple[str, ...]]
 
@@ -157,13 +171,12 @@ class Fn:
     def from_fndef(cls, *, arena: "Arena", fndef: FnDef):
         name, fn, arg_names = fndef
         assert len(arg_names) == len(fn.arg_types)
-        args = [
-            ArgGroup(
-                zig_args=[ZigArg(name=arg_name, arg_type=arg_type)],
-                api_args=[arg_name],
-            )
+        zig_args = [
+            ZigArg(name=arg_name, arg_type=arg_type)
             for arg_name, arg_type in zip(arg_names, fn.arg_types)
         ]
+        args = [ArgGroup(zig_args=zig_args, api_args=list(arg_names))]
+
         return cls(arena=arena, name=name, args=args, ret_type=fn.ret_type)
 
     def first_arg_type(self) -> Optional[SysType]:
@@ -224,19 +237,74 @@ class Fn:
 
     def render_zig(self) -> str:
         pub = "pub " if self.public else ""
+        ret = render_zig_type_no_const(self.ret_type)
         fn_args = comma_if_longer(
             ", ".join([arg.render_zig() for ag in self.args for arg in ag.zig_args]),
-            70 - len(self.zig_name),
+            70 - len(self.zig_name) - len(ret),
         )
         call_args = comma_if_longer(
             ", ".join([arg for ag in self.args for arg in ag.api_args]),
             70 - len(self.name),
         )
-        ret = render_zig_type_no_const(self.ret_type)
         hdr = f"{pub}fn {self.zig_name}({fn_args}) {ret} " + "{"
         call = f"api.{self.name}({call_args});"
         ftr = "}"
         return f"{hdr}\n{call}\n{ftr}"
+
+    def find_arg(self, index: int) -> tuple[int, int]:
+        """
+        Given an arg index (which indexes into the called api function's args)
+        return a tuple containing the index of the containing ArgGroup and the
+        arg's index within that group. It is an error to reference out of range
+        args.
+        """
+        arg_index = index
+        for group_index, group in enumerate(self.args):
+            if arg_index < len(group.zig_args):
+                return group_index, arg_index
+            arg_index -= len(group.zig_args)
+
+        raise ValueError(f"Arg index {index} out of range")
+
+    # Useful mutations
+    def group_args(self, start: int, end: int) -> ArgGroup:
+        """
+        Given an range of args as start, count combine those args into a
+        single group and return that group. If they are currently in a matching
+        group return that group. If they are currently grouped incompatibly raise
+        an error.
+        """
+
+        def contig(sgi: int, sai: int, egi: int, eai: int) -> bool:
+            return egi == sgi or (egi == sgi + 1 and eai == 0)
+
+        assert end > start
+        sgi, sai = self.find_arg(start)
+        egi, eai = self.find_arg(end)
+
+        if not contig(sgi, sai, egi, eai):
+            raise ValueError(f"Range {start} - {end} spans multiple groups")
+
+        # Split group at start index - which is a nop if the index is zero -
+        # and recompute sgi, sai, egi, eai
+        self.args[sgi : sgi + 1] = self.args[sgi].split(sai)
+        sgi, sai = self.find_arg(start)
+        egi, eai = self.find_arg(end)
+
+        assert contig(sgi, sai, egi, eai)
+
+        # Split group at end index - which is a nop if the index is at the end
+        # of the group and recompute again
+        self.args[sgi : sgi + 1] = self.args[sgi].split(eai)
+        sgi, sai = self.find_arg(start)
+        egi, eai = self.find_arg(end)
+
+        assert contig(sgi, sai, egi, eai)
+
+        group = self.args[sgi]
+        assert len(group.api_args) == end - start
+
+        return group
 
 
 @dataclass(kw_only=True)
@@ -267,7 +335,7 @@ class Struct:
         return pascal_case(self.base_name)
 
     def render_zig(self) -> str:
-        body = "\n".join([fn.render_zig() for fn in self.fns])
+        body = "\n\n".join([fn.render_zig() for fn in self.fns])
         if self.is_free:
             return f"{body}\n"
         return f"pub const {self.zig_name} = struct " + "{\n" + body + "};\n"
