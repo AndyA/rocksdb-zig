@@ -1,6 +1,7 @@
 """A simple representation of C/C++/Zig types for code generation"""
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -32,6 +33,7 @@ class PointerType(BaseType):
 @dataclass(kw_only=True, frozen=True)
 class ArrayType(BaseType):
     child_type: "SysType"
+    sentinel: Optional[int] = None
 
 
 @dataclass(kw_only=True, frozen=True)
