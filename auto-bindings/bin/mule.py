@@ -79,7 +79,7 @@ def render_zig_type_no_const(t: SysType) -> str:
             args = ", ".join([render_zig_type(t) for t in arg_types])
             ret = render_zig_type(ret_type)
             return f"fn ({args},) {ret} "
-        case PointerType(ref_type=VoidType(is_const=is_const)):
+        case PointerType(child=VoidType(is_const=is_const)):
             if is_const:
                 return "*const anyopaque"
             else:

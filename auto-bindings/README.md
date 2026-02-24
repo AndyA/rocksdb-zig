@@ -15,6 +15,7 @@
 - handle array of slices (e.g. `rocksdb_approximate_sizes`)
 - handle parallel array args (e.g. `rocksdb_open_for_read_only_column_families`)
 - possible nullability of return types
+- setters return their invocant
 
 ```python
 rule(
