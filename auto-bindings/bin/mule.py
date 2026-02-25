@@ -269,7 +269,7 @@ class Fn:
     # Useful mutations
     def group_args(self, start: int, end: int) -> ArgGroup:
         """
-        Given an range of args as start, count combine those args into a
+        Given an range of args as [start, end) combine those args into a
         single group and return that group. If they are currently in a matching
         group return that group. If they are currently grouped incompatibly raise
         an error.
