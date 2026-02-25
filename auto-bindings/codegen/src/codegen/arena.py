@@ -40,7 +40,7 @@ class ZigArg:
         return self.name + ": " + render_zig_type_no_const(self.arg_type)
 
 
-@dataclass(kw_only=True, frozen=True)
+@dataclass(kw_only=True)
 class ArgGroup:
     zig_args: list[ZigArg]
     api_args: list[str]
@@ -168,6 +168,9 @@ class Fn:
                 return group_index, arg_index
             arg_index -= len(group.zig_args)
 
+        if arg_index == 0:
+            return len(self.args), 0
+
         raise ValueError(f"Arg index {index} out of range")
 
     # Useful mutations
@@ -231,6 +234,16 @@ class Struct:
     @cached_property
     def is_free(self) -> bool:
         return self.name == "_"
+
+    @cached_property
+    def fn_index(self) -> dict[str, Fn]:
+        index: dict[str, Fn] = {}
+        for fn in self.fns:
+            index[fn.name] = fn
+        return index
+
+    def get_fn(self, name: str) -> Fn:
+        return self.fn_index[name]
 
     @cached_property
     def zig_name(self) -> str:
