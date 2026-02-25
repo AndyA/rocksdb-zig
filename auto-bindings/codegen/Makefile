@@ -13,6 +13,7 @@ test:
 
 tdd:
 	uv run ptw . \
+		-vv \
 	  --cov=src/codegen \
 		--cov-report term-missing:skip-covered \
 		--cov-branch

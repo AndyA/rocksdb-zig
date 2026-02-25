@@ -157,7 +157,7 @@ class Fn:
 
     def find_arg(self, index: int) -> tuple[int, int]:
         """
-        Given an arg index (which indexes into the called api function's args)
+        Given an arg index (which indexes into the zig function's args)
         return a tuple containing the index of the containing ArgGroup and the
         arg's index within that group. It is an error to reference out of range
         args.
@@ -290,6 +290,16 @@ class Arena:
     @cached_property
     def fns(self) -> list[Fn]:
         return [Fn.from_fndef(arena=self, fndef=fndef) for fndef in self.fndefs]
+
+    @cached_property
+    def fn_index(self) -> dict[str, Fn]:
+        index: dict[str, Fn] = {}
+        for fn in self.fns:
+            index[fn.name] = fn
+        return index
+
+    def get_fn(self, name: str) -> Fn:
+        return self.fn_index[name]
 
     @cached_property
     def structs(self) -> dict[str, Struct]:
