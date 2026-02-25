@@ -7,7 +7,9 @@ authors = [
     { name = "Andy Armstrong", email = "andy@hexten.net" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "libclang==18.1.1",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.4,<0.11.0"]
@@ -15,6 +17,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "ptw>=1.0.1",
     "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-watcher>=0.6.3",
 ]
