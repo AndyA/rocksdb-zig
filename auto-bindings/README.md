@@ -1,21 +1,17 @@
-# Bugs
-
-- why is everything const?
-
 # Thinks
 
-- unshadow args (`destroy` -> `destroy_`)
+- ~~unshadow args (`destroy` -> `destroy_`)~~
+- ~~slice -> `char *, i64`~~
+- error handling (`errptr`)
 - thunk between wrapper structs and RockDB handles
-- slice -> `char *, i64`
 - sentinel term strings -> slice
 - slice -> sentinel term string
-- error handling (`errptr`)
 - callback shims
 - is `unsigned char` always `bool`?
 - handle array of slices (e.g. `rocksdb_approximate_sizes`)
 - handle parallel array args (e.g. `rocksdb_open_for_read_only_column_families`)
 - possible nullability of return types
-- setters return their invocant
+- setters return their invocant?
 
 ```python
 rule(

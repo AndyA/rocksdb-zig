@@ -224,7 +224,8 @@ class Struct:
     arena: "Arena"
     name: str
     fns: list[Fn]
-    top_matter: list[str] = field(default_factory=list)
+    pre: list[str] = field(default_factory=list)
+    post: list[str] = field(default_factory=list)
 
     @cached_property
     def prefix(self) -> str:
@@ -258,15 +259,19 @@ class Struct:
         return pascal_case(self.base_name)
 
     def render_zig(self) -> str:
-        top = "\n".join(self.top_matter)
+        pre = "\n".join(self.pre)
         decls = "\n\n".join([fn.render_zig() for fn in self.fns])
-        body = f"{top}\n\n{decls}\n"
+        post = "\n".join(self.post)
+        body = f"{pre}\n\n{decls}\n\n{post}"
         if self.is_free:
             return body
         return f"pub const {self.zig_name} = packed struct " + "{\n" + body + "};\n"
 
-    def add_top_matter(self, line: str) -> None:
-        self.top_matter.append(line)
+    def add_pre(self, line: str) -> None:
+        self.pre.append(line)
+
+    def add_post(self, line: str) -> None:
+        self.post.append(line)
 
 
 @dataclass(kw_only=True, frozen=True)
