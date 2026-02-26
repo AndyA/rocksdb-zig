@@ -2,23 +2,21 @@ from typing import Generator
 
 from clang.cindex import Index
 from codegen.arena import Arena, ArgGroup, Fn, ZigArg
-from codegen.systype import ExtType, IntType, PointerSize, PointerType
-
-
-def unshadow(fn_names: set[str], name: str) -> str:
-    if name in fn_names:
-        return name + "_"
-    return name
-
-
-def unshadow_zig(fn_names: set[str], arg: ZigArg) -> ZigArg:
-    new_name = unshadow(fn_names, arg.name)
-    if new_name == arg.name:
-        return arg
-    return ZigArg(name=new_name, arg_type=arg.arg_type)
+from codegen.systype import IntType, PointerSize, PointerType, SysType
 
 
 def rename_args_to_avoid_shadowing(arena: Arena) -> None:
+    def unshadow(fn_names: set[str], name: str) -> str:
+        if name in fn_names:
+            return name + "_"
+        return name
+
+    def unshadow_zig(fn_names: set[str], arg: ZigArg) -> ZigArg:
+        new_name = unshadow(fn_names, arg.name)
+        if new_name == arg.name:
+            return arg
+        return ZigArg(name=new_name, arg_type=arg.arg_type)
+
     for struct in arena.structs.values():
         fn_names = {fn.zig_name for fn in struct.fns}
         for fn in struct.fns:
@@ -41,56 +39,6 @@ def visit_zig_args(
         for index in range(0, len(ag.zig_args) - span + 1):
             yield base + index, ag.zig_args[index : index + span]
         base += len(ag.zig_args)
-
-
-[
-    ArgGroup(
-        zig_args=[
-            ZigArg(
-                name="db",
-                arg_type=PointerType(
-                    is_const=False,
-                    child=ExtType(is_const=False, name="rocksdb_t"),
-                    size=PointerSize.C,
-                    sentinel=None,
-                ),
-            )
-        ],
-        api_args=["db"],
-    ),
-    ArgGroup(
-        zig_args=[
-            ZigArg(
-                name="start_key",
-                arg_type=PointerType(
-                    is_const=True,
-                    child=IntType(is_const=True, signed=False, bits=8),
-                    size=PointerSize.SLICE,
-                    sentinel=None,
-                ),
-            )
-        ],
-        api_args=["@ptrCast(start_key.ptr)", "@intCast(start_key.len)"],
-    ),
-    ArgGroup(
-        zig_args=[
-            ZigArg(
-                name="limit_key",
-                arg_type=PointerType(
-                    is_const=False,
-                    child=IntType(is_const=True, signed=True, bits=8),
-                    size=PointerSize.C,
-                    sentinel=None,
-                ),
-            ),
-            ZigArg(
-                name="limit_key_len",
-                arg_type=IntType(is_const=False, signed=True, bits=64),
-            ),
-        ],
-        api_args=["limit_key", "limit_key_len"],
-    ),
-]
 
 
 def slice_to_ptr_len(arena: Arena) -> None:
@@ -129,7 +77,7 @@ def slice_to_ptr_len(arena: Arena) -> None:
                     if f"{ptr_name}/{len_name}" not in valid_pairs:
                         continue
 
-                    ag = fn.group_args(index, index + 2)
+                    ag = fn.args_group(index, index + 2)
                     ag.zig_args = [
                         ZigArg(
                             name=ptr_name,
@@ -157,11 +105,24 @@ def slice_to_ptr_len(arena: Arena) -> None:
                 pass
 
 
+def add_struct_fields(arena: Arena) -> None:
+    for struct in arena.structs.values():
+        if struct.is_free:
+            continue
+        struct.add_top_matter("const Self = @This();\n")
+        struct.add_top_matter(f"ref: *{arena.api}.{struct.name},")
+
+
+def handle_to_wrapper(arena: Arena, t: SysType) -> SysType:
+    return t
+
+
 def main(header: str) -> None:
     idx = Index.create()
     tu = idx.parse(header)
     arena = Arena.from_cursor(tu.cursor)
 
+    add_struct_fields(arena)
     rename_args_to_avoid_shadowing(arena)
     slice_to_ptr_len(arena)
 

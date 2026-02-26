@@ -74,15 +74,7 @@ class TestArgGroup:
 
 
 class TestFn:
-    def test_group_args(self, arena: Arena):
-        # extern ROCKSDB_LIBRARY_API void rocksdb_put(
-        #     rocksdb_t* db,
-        #     const rocksdb_writeoptions_t* options,
-        #     const char* key,
-        #     size_t keylen,
-        #     const char* val,
-        #     size_t vallen,
-        #     char** errptr);
+    def test_args_group(self, arena: Arena):
         fn = arena.get_fn("rocksdb_put")
 
         zig_args1 = [
@@ -127,7 +119,7 @@ class TestFn:
             ),
         ]
 
-        key_args = fn.group_args(2, 4)
+        key_args = fn.args_group(2, 4)
         assert key_args == ArgGroup(zig_args=zig_args2, api_args=api_args2)
         assert fn.args == split1_args
 
@@ -138,10 +130,13 @@ class TestFn:
             ArgGroup(zig_args=zig_args4, api_args=api_args4),
         ]
 
-        val_args = fn.group_args(4, 6)
+        val_args = fn.args_group(4, 6)
         assert val_args == ArgGroup(zig_args=zig_args3, api_args=api_args3)
         assert fn.args == split2_args
 
-        key_args2 = fn.group_args(2, 4)
+        key_args2 = fn.args_group(2, 4)
         assert key_args2 == key_args
         assert fn.args == split2_args
+
+        fn.merge_args()
+        assert fn.args == all_args

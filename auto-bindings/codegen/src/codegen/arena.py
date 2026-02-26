@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Optional, Self
 
@@ -151,7 +151,7 @@ class Fn:
             70 - len(self.name),
         )
         hdr = f"{pub}fn {self.zig_name}({fn_args}) {ret} " + "{"
-        call = f"api.{self.name}({call_args});"
+        call = f"{self.arena.api}.{self.name}({call_args});"
         ftr = "}"
         return f"{hdr}\n{call}\n{ftr}"
 
@@ -174,7 +174,7 @@ class Fn:
         raise ValueError(f"Arg index {index} out of range")
 
     # Useful mutations
-    def group_args(self, start: int, end: int) -> ArgGroup:
+    def args_group(self, start: int, end: int) -> ArgGroup:
         """
         Given an range of args as [start, end) combine those args into a
         single group and return that group. If they are currently in a matching
@@ -213,12 +213,18 @@ class Fn:
 
         return group
 
+    def merge_args(self) -> None:
+        zig_args = [arg for ag in self.args for arg in ag.zig_args]
+        api_args = [arg for ag in self.args for arg in ag.api_args]
+        self.args = [ArgGroup(zig_args=zig_args, api_args=api_args)]
+
 
 @dataclass(kw_only=True)
 class Struct:
     arena: "Arena"
     name: str
     fns: list[Fn]
+    top_matter: list[str] = field(default_factory=list)
 
     @cached_property
     def prefix(self) -> str:
@@ -252,14 +258,20 @@ class Struct:
         return pascal_case(self.base_name)
 
     def render_zig(self) -> str:
-        body = "\n\n".join([fn.render_zig() for fn in self.fns])
+        top = "\n".join(self.top_matter)
+        decls = "\n\n".join([fn.render_zig() for fn in self.fns])
+        body = f"{top}\n\n{decls}\n"
         if self.is_free:
-            return f"{body}\n"
+            return body
         return f"pub const {self.zig_name} = struct " + "{\n" + body + "};\n"
+
+    def add_top_matter(self, line: str) -> None:
+        self.top_matter.append(line)
 
 
 @dataclass(kw_only=True, frozen=True)
 class Arena:
+    api: str = "api"
     handles: set[str]
     fndefs: list[FnDef]
 
@@ -332,4 +344,4 @@ class Arena:
         body = "\n".join(
             [self.structs[name].render_zig() for name in sorted(self.structs.keys())]
         )
-        return f'const api = @import("rocksdb");\n\n{body}'
+        return f'const {self.api} = @import("rocksdb");\n\n{body}'
