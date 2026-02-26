@@ -1,4 +1,6 @@
-.venv/
 .coverage
+.venv/
+.zig-cache/
 __pycache__/
 tmp/
+zig-out/
