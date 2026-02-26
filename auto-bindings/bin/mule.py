@@ -110,6 +110,7 @@ def add_struct_fields(arena: Arena) -> None:
         if struct.is_free:
             continue
         struct.add_top_matter("const Self = @This();\n")
+        struct.add_top_matter("comptime {assert(@sizeOf(Self) == 8);}\n")
         struct.add_top_matter(f"ref: *{arena.api}.{struct.name},")
 
 
@@ -125,6 +126,15 @@ def main(header: str) -> None:
     add_struct_fields(arena)
     rename_args_to_avoid_shadowing(arena)
     slice_to_ptr_len(arena)
+
+    print(
+        f"""
+        const std = @import("std");
+        const assert = std.debug.assert;
+
+        const {arena.api} = @import("rocksdb");
+        """
+    )
 
     print(arena.render_zig())
 

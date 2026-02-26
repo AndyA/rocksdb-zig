@@ -341,7 +341,6 @@ class Arena:
         }
 
     def render_zig(self) -> str:
-        body = "\n".join(
+        return "\n".join(
             [self.structs[name].render_zig() for name in sorted(self.structs.keys())]
         )
-        return f'const {self.api} = @import("rocksdb");\n\n{body}'
