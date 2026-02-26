@@ -263,7 +263,7 @@ class Struct:
         body = f"{top}\n\n{decls}\n"
         if self.is_free:
             return body
-        return f"pub const {self.zig_name} = extern struct " + "{\n" + body + "};\n"
+        return f"pub const {self.zig_name} = packed struct " + "{\n" + body + "};\n"
 
     def add_top_matter(self, line: str) -> None:
         self.top_matter.append(line)
