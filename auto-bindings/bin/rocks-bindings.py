@@ -1,8 +1,8 @@
 from typing import Generator
 
 from clang.cindex import Index
-from codegen.arena import Arena, ArgGroup, Fn, ZigArg
-from codegen.systype import IntType, PointerSize, PointerType, SysType
+from codegen.arena import Arena, ArgGroup, Fn, Struct, ZigArg
+from codegen.systype import ExtType, IntType, PointerSize, PointerType, SysType
 
 
 def rename_args_to_avoid_shadowing(arena: Arena) -> None:
@@ -31,7 +31,15 @@ def rename_args_to_avoid_shadowing(arena: Arena) -> None:
             fn.args = new_args
 
 
-def visit_zig_args(
+def visit_zig_args(fn: Fn) -> Generator[tuple[int, ZigArg], None, None]:
+    index = 0
+    for ag in fn.args:
+        for arg in ag.zig_args:
+            yield index, arg
+            index += 1
+
+
+def visit_zig_arg_slices(
     fn: Fn, span: int
 ) -> Generator[tuple[int, list[ZigArg]], None, None]:
     base = 0
@@ -65,7 +73,7 @@ def slice_to_ptr_len(arena: Arena) -> None:
     }
 
     def find_slice(fn: Fn) -> bool:
-        for slice in visit_zig_args(fn, 2):
+        for slice in visit_zig_arg_slices(fn, 2):
             match slice:
                 case index, [
                     ZigArg(
@@ -119,8 +127,21 @@ def add_struct_fields(arena: Arena) -> None:
         struct.add_post("}")
 
 
-def handle_to_wrapper(arena: Arena, t: SysType) -> SysType:
+def foo(struct: Struct, t: SysType) -> SysType:
+    match t:
+        case PointerType(child=ExtType(name=name)):
+            pass
     return t
+
+
+def handle_to_wrapper_args(arena: Arena) -> None:
+    for struct in arena.structs.values():
+        for fn in struct.fns:
+            # Capture generator in a list because we're going to be
+            # slicing the args
+            for index, arg in list(visit_zig_args(fn)):
+                pass
+            fn.merge_args()
 
 
 def main(header: str) -> None:
@@ -130,12 +151,15 @@ def main(header: str) -> None:
 
     add_struct_fields(arena)
     rename_args_to_avoid_shadowing(arena)
+    handle_to_wrapper_args(arena)
     slice_to_ptr_len(arena)
 
     print(
         f"""
         const std = @import("std");
         const assert = std.debug.assert;
+
+        const helpers = @import("./helpers.zig");
 
         const {arena.api} = @import("rocksdb");
         """

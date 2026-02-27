@@ -2,8 +2,8 @@
 
 - ~~unshadow args (`destroy` -> `destroy_`)~~
 - ~~slice -> `char *, i64`~~
-- error handling (`errptr`)
 - thunk between wrapper structs and RockDB handles
+- error handling (`errptr`)
 - sentinel term strings -> slice
 - slice -> sentinel term string
 - callback shims
