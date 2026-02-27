@@ -3,6 +3,7 @@
 - ~~unshadow args (`destroy` -> `destroy_`)~~
 - ~~slice -> `char *, i64`~~
 - thunk between wrapper structs and RockDB handles
+- rename `Self` arg as `self`
 - error handling (`errptr`)
 - sentinel term strings -> slice
 - slice -> sentinel term string
