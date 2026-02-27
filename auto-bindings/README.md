@@ -65,3 +65,5 @@ Odd `size_t` must be wrong:
         );
     }
 ```
+
+Turns out we're picking up the return type of the callback rather than its name.
