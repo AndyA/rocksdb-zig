@@ -172,12 +172,6 @@ def to_wrapper_type(struct: Struct, t: SysType, *, force_const=False) -> Wrapped
                         name=new_name,
                     )
 
-        # case PointerType(child=child):
-        #     mut, new_child = to_wrapper_type(struct, child)
-        #     if mut:
-        #         t.child = new_child
-        #     return mut, t
-
     return Wrapped(new_type=t, ref_type=RefType.NO)
 
 

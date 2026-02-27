@@ -42,3 +42,26 @@ def parallel_arrays(
 # Bugs
 
 `getFullHistoryTsLow` has `ts_lowlen` but no `ts_low`
+
+Odd `size_t` must be wrong:
+
+```zig
+   pub fn updateTimestamps(
+        wbwi: *Self,
+        ts: []const u8,
+        state: *anyopaque,
+        size_t: fn (
+            [*c]i64,
+        ) i64,
+        errptr: [*c][*c]i8,
+    ) void {
+        return api.rocksdb_writebatch_wi_update_timestamps(
+            helpers.unwrap(wbwi.*),
+            @ptrCast(ts.ptr),
+            @intCast(ts.len),
+            state,
+            size_t,
+            errptr,
+        );
+    }
+```
