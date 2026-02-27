@@ -155,22 +155,23 @@ def to_wrapper_type(struct: Struct, t: SysType, *, force_const=False) -> Wrapped
         case PointerType(child=ExtType(is_const=is_const, name=name)):
             if target := struct.arena.structs.get(name):
                 new_name = wrapper_name(target)
+
                 if is_const or force_const:
                     return Wrapped(
                         new_type=WrapperType(is_const=False, name=new_name),
                         ref_type=RefType.CONST,
                         name=new_name,
                     )
-                else:
-                    return Wrapped(
-                        new_type=PointerType(
-                            is_const=False,
-                            size=PointerSize.ONE,
-                            child=WrapperType(is_const=False, name=new_name),
-                        ),
-                        ref_type=RefType.VAR,
-                        name=new_name,
-                    )
+
+                return Wrapped(
+                    new_type=PointerType(
+                        is_const=False,
+                        size=PointerSize.ONE,
+                        child=WrapperType(is_const=False, name=new_name),
+                    ),
+                    ref_type=RefType.VAR,
+                    name=new_name,
+                )
 
     return Wrapped(new_type=t, ref_type=RefType.NO)
 
