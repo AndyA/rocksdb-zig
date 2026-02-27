@@ -12,6 +12,10 @@
 - handle parallel array args (e.g. `rocksdb_open_for_read_only_column_families`)
 - possible nullability of return types
 - setters return their invocant?
+- classifying `[*c]` pointers
+  - nullable
+  - array
+  - ref to additional return value
 
 ```python
 rule(
