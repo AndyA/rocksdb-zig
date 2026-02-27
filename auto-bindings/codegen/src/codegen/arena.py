@@ -71,7 +71,7 @@ class Fn:
     args: list[ArgGroup]
     ret_type: SysType
     public: bool = True
-    call: str = "return %CALL%;"
+    call: str = "%CALL%"
 
     @classmethod
     def from_fndef(cls, *, arena: "Arena", fndef: FnDef):
@@ -159,7 +159,7 @@ class Fn:
             self.call,
         )
         ftr = "}"
-        return f"{hdr}\n{call}\n{ftr}"
+        return f"{hdr}\nreturn {call};\n{ftr}"
 
     def find_arg(self, index: int) -> tuple[int, int]:
         """

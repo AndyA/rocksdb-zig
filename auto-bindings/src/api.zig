@@ -87,8 +87,8 @@ pub const RocksdbBackupEngineOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_backup_engine_options_t,
 
-    pub fn create(backup_dir: [*c]const i8) [*c]api.rocksdb_backup_engine_options_t {
-        return api.rocksdb_backup_engine_options_create(backup_dir);
+    pub fn create(backup_dir: [*c]const i8) Self {
+        return helpers.wrap(Self, api.rocksdb_backup_engine_options_create(backup_dir));
     }
 
     pub fn setBackupDir(options: *Self, backup_dir: [*c]const i8) void {
@@ -250,20 +250,20 @@ pub const RocksdbBackupEngine = packed struct {
         options: RocksdbOptions,
         path: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_backup_engine_t {
-        return api.rocksdb_backup_engine_open(helpers.unwrap(options), path, errptr);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_backup_engine_open(helpers.unwrap(options), path, errptr));
     }
 
     pub fn openOpts(
         options: RocksdbBackupEngineOptions,
         env: *RocksdbEnv,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_backup_engine_t {
-        return api.rocksdb_backup_engine_open_opts(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_backup_engine_open_opts(
             helpers.unwrap(options),
             helpers.unwrap(env.*),
             errptr,
-        );
+        ));
     }
 
     pub fn createNewBackup(be: *Self, db: *Rocksdb, errptr: [*c][*c]i8) void {
@@ -342,8 +342,8 @@ pub const RocksdbBackupEngine = packed struct {
         );
     }
 
-    pub fn getBackupInfo(be: *Self) [*c]const api.rocksdb_backup_engine_info_t {
-        return api.rocksdb_backup_engine_get_backup_info(helpers.unwrap(be.*));
+    pub fn getBackupInfo(be: *Self) RocksdbBackupEngineInfo {
+        return helpers.wrap(RocksdbBackupEngineInfo, api.rocksdb_backup_engine_get_backup_info(helpers.unwrap(be.*)));
     }
 
     pub fn close(be: *Self) void {
@@ -362,8 +362,8 @@ pub const RocksdbBlockBasedTableOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_block_based_table_options_t,
 
-    pub fn create() [*c]api.rocksdb_block_based_table_options_t {
-        return api.rocksdb_block_based_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_block_based_options_create());
     }
 
     pub fn destroy(options: *Self) void {
@@ -559,16 +559,16 @@ pub const RocksdbCache = packed struct {
     const Self = @This();
     ref: *api.rocksdb_cache_t,
 
-    pub fn createLru(capacity: i64) [*c]api.rocksdb_cache_t {
-        return api.rocksdb_cache_create_lru(capacity);
+    pub fn createLru(capacity: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_cache_create_lru(capacity));
     }
 
-    pub fn createLruWithStrictCapacityLimit(capacity: i64) [*c]api.rocksdb_cache_t {
-        return api.rocksdb_cache_create_lru_with_strict_capacity_limit(capacity);
+    pub fn createLruWithStrictCapacityLimit(capacity: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_cache_create_lru_with_strict_capacity_limit(capacity));
     }
 
-    pub fn createLruOpts(arg0: RocksdbLruCacheOptions) [*c]api.rocksdb_cache_t {
-        return api.rocksdb_cache_create_lru_opts(helpers.unwrap(arg0));
+    pub fn createLruOpts(arg0: RocksdbLruCacheOptions) Self {
+        return helpers.wrap(Self, api.rocksdb_cache_create_lru_opts(helpers.unwrap(arg0)));
     }
 
     pub fn destroy(cache: *Self) void {
@@ -603,17 +603,12 @@ pub const RocksdbCache = packed struct {
         return api.rocksdb_cache_get_occupancy_count(helpers.unwrap(cache));
     }
 
-    pub fn createHyperClock(
-        capacity: i64,
-        estimated_entry_charge: i64,
-    ) [*c]api.rocksdb_cache_t {
-        return api.rocksdb_cache_create_hyper_clock(capacity, estimated_entry_charge);
+    pub fn createHyperClock(capacity: i64, estimated_entry_charge: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_cache_create_hyper_clock(capacity, estimated_entry_charge));
     }
 
-    pub fn createHyperClockOpts(
-        arg0: RocksdbHyperClockCacheOptions,
-    ) [*c]api.rocksdb_cache_t {
-        return api.rocksdb_cache_create_hyper_clock_opts(helpers.unwrap(arg0));
+    pub fn createHyperClockOpts(arg0: RocksdbHyperClockCacheOptions) Self {
+        return helpers.wrap(Self, api.rocksdb_cache_create_hyper_clock_opts(helpers.unwrap(arg0)));
     }
 
     test RocksdbCache {
@@ -628,11 +623,8 @@ pub const RocksdbCheckpoint = packed struct {
     const Self = @This();
     ref: *api.rocksdb_checkpoint_t,
 
-    pub fn objectCreate(
-        db: *Rocksdb,
-        errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_checkpoint_t {
-        return api.rocksdb_checkpoint_object_create(helpers.unwrap(db.*), errptr);
+    pub fn objectCreate(db: *Rocksdb, errptr: [*c][*c]i8) Self {
+        return helpers.wrap(Self, api.rocksdb_checkpoint_object_create(helpers.unwrap(db.*), errptr));
     }
 
     pub fn create(
@@ -654,13 +646,13 @@ pub const RocksdbCheckpoint = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         export_dir: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_export_import_files_metadata_t {
-        return api.rocksdb_checkpoint_export_column_family(
+    ) RocksdbExportImportFilesMetadata {
+        return helpers.wrap(RocksdbExportImportFilesMetadata, api.rocksdb_checkpoint_export_column_family(
             helpers.unwrap(checkpoint.*),
             helpers.unwrap(column_family.*),
             export_dir,
             errptr,
-        );
+        ));
     }
 
     pub fn objectDestroy(checkpoint: *Self) void {
@@ -730,14 +722,11 @@ pub const RocksdbColumnFamilyMetadata = packed struct {
         );
     }
 
-    pub fn getLevelMetadata(
-        cf_meta: *Self,
-        i: i64,
-    ) [*c]api.rocksdb_level_metadata_t {
-        return api.rocksdb_column_family_metadata_get_level_metadata(
+    pub fn getLevelMetadata(cf_meta: *Self, i: i64) RocksdbLevelMetadata {
+        return helpers.wrap(RocksdbLevelMetadata, api.rocksdb_column_family_metadata_get_level_metadata(
             helpers.unwrap(cf_meta.*),
             i,
-        );
+        ));
     }
 
     test RocksdbColumnFamilyMetadata {
@@ -771,8 +760,8 @@ pub const RocksdbCompactionfilter = packed struct {
         name: [*c]fn (
             *anyopaque,
         ) [*c]const i8,
-    ) [*c]api.rocksdb_compactionfilter_t {
-        return api.rocksdb_compactionfilter_create(state, destructor, filter, name);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_compactionfilter_create(state, destructor, filter, name));
     }
 
     pub fn setIgnoreSnapshots(arg0: *Self, arg1: u8) void {
@@ -834,13 +823,13 @@ pub const RocksdbCompactionfilterfactory = packed struct {
         name: [*c]fn (
             *anyopaque,
         ) [*c]const i8,
-    ) [*c]api.rocksdb_compactionfilterfactory_t {
-        return api.rocksdb_compactionfilterfactory_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_compactionfilterfactory_create(
             state,
             destructor,
             create_compaction_filter,
             name,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -949,8 +938,8 @@ pub const RocksdbCompactoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_compactoptions_t,
 
-    pub fn create() [*c]api.rocksdb_compactoptions_t {
-        return api.rocksdb_compactoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_compactoptions_create());
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1064,8 +1053,8 @@ pub const RocksdbComparator = packed struct {
         name: [*c]fn (
             *anyopaque,
         ) [*c]const i8,
-    ) [*c]api.rocksdb_comparator_t {
-        return api.rocksdb_comparator_create(state, destructor, compare, name);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_comparator_create(state, destructor, compare, name));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1104,8 +1093,8 @@ pub const RocksdbComparator = packed struct {
             *anyopaque,
         ) [*c]const i8,
         timestamp_size: i64,
-    ) [*c]api.rocksdb_comparator_t {
-        return api.rocksdb_comparator_with_ts_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_comparator_with_ts_create(
             state,
             destructor,
             compare,
@@ -1113,7 +1102,7 @@ pub const RocksdbComparator = packed struct {
             compare_without_ts,
             name,
             timestamp_size,
-        );
+        ));
     }
 
     test RocksdbComparator {
@@ -1128,8 +1117,8 @@ pub const RocksdbCuckooTableOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_cuckoo_table_options_t,
 
-    pub fn create() [*c]api.rocksdb_cuckoo_table_options_t {
-        return api.rocksdb_cuckoo_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_cuckoo_options_create());
     }
 
     pub fn destroy(options: *Self) void {
@@ -1180,8 +1169,8 @@ pub const RocksdbDbpath = packed struct {
     const Self = @This();
     ref: *api.rocksdb_dbpath_t,
 
-    pub fn create(path: [*c]const i8, target_size: i64) [*c]api.rocksdb_dbpath_t {
-        return api.rocksdb_dbpath_create(path, target_size);
+    pub fn create(path: [*c]const i8, target_size: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_dbpath_create(path, target_size));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1200,12 +1189,12 @@ pub const RocksdbEnv = packed struct {
     const Self = @This();
     ref: *api.rocksdb_env_t,
 
-    pub fn createDefaultEnv() [*c]api.rocksdb_env_t {
-        return api.rocksdb_create_default_env();
+    pub fn createDefaultEnv() Self {
+        return helpers.wrap(Self, api.rocksdb_create_default_env());
     }
 
-    pub fn createMemEnv() [*c]api.rocksdb_env_t {
-        return api.rocksdb_create_mem_env();
+    pub fn createMemEnv() Self {
+        return helpers.wrap(Self, api.rocksdb_create_mem_env());
     }
 
     pub fn setBackgroundThreads(env: *Self, n: i64) void {
@@ -1299,8 +1288,8 @@ pub const RocksdbEnvoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_envoptions_t,
 
-    pub fn create() [*c]api.rocksdb_envoptions_t {
-        return api.rocksdb_envoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_envoptions_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -1334,8 +1323,8 @@ pub const RocksdbEventlistener = packed struct {
         on_background_error: api.on_background_error_cb,
         on_stall_conditions_changed: api.on_stall_conditions_changed_cb,
         on_memtable_sealed: api.on_memtable_sealed_cb,
-    ) [*c]api.rocksdb_eventlistener_t {
-        return api.rocksdb_eventlistener_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_eventlistener_create(
             state_,
             destructor_,
             on_flush_begin,
@@ -1348,7 +1337,7 @@ pub const RocksdbEventlistener = packed struct {
             on_background_error,
             on_stall_conditions_changed,
             on_memtable_sealed,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1367,8 +1356,8 @@ pub const RocksdbExportImportFilesMetadata = packed struct {
     const Self = @This();
     ref: *api.rocksdb_export_import_files_metadata_t,
 
-    pub fn create() [*c]api.rocksdb_export_import_files_metadata_t {
-        return api.rocksdb_export_import_files_metadata_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_export_import_files_metadata_create());
     }
 
     pub fn getDbComparatorName(arg0: *Self) [*c]i8 {
@@ -1384,8 +1373,8 @@ pub const RocksdbExportImportFilesMetadata = packed struct {
         );
     }
 
-    pub fn getFiles(arg0: *Self) [*c]api.rocksdb_livefiles_t {
-        return api.rocksdb_export_import_files_metadata_get_files(helpers.unwrap(arg0.*));
+    pub fn getFiles(arg0: *Self) RocksdbLivefiles {
+        return helpers.wrap(RocksdbLivefiles, api.rocksdb_export_import_files_metadata_get_files(helpers.unwrap(arg0.*)));
     }
 
     pub fn setFiles(arg0: *Self, arg1: *RocksdbLivefiles) void {
@@ -1434,8 +1423,8 @@ pub const RocksdbFifoCompactionOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_fifo_compaction_options_t,
 
-    pub fn create() [*c]api.rocksdb_fifo_compaction_options_t {
-        return api.rocksdb_fifo_compaction_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_fifo_compaction_options_create());
     }
 
     pub fn setAllowCompaction(fifo_opts: *Self, allow_compaction: u8) void {
@@ -1484,28 +1473,26 @@ pub const RocksdbFilterpolicy = packed struct {
         return api.rocksdb_filterpolicy_destroy(helpers.unwrap(arg0.*));
     }
 
-    pub fn createBloom(bits_per_key: f64) [*c]api.rocksdb_filterpolicy_t {
-        return api.rocksdb_filterpolicy_create_bloom(bits_per_key);
+    pub fn createBloom(bits_per_key: f64) Self {
+        return helpers.wrap(Self, api.rocksdb_filterpolicy_create_bloom(bits_per_key));
     }
 
-    pub fn createBloomFull(bits_per_key: f64) [*c]api.rocksdb_filterpolicy_t {
-        return api.rocksdb_filterpolicy_create_bloom_full(bits_per_key);
+    pub fn createBloomFull(bits_per_key: f64) Self {
+        return helpers.wrap(Self, api.rocksdb_filterpolicy_create_bloom_full(bits_per_key));
     }
 
-    pub fn createRibbon(
-        bloom_equivalent_bits_per_key: f64,
-    ) [*c]api.rocksdb_filterpolicy_t {
-        return api.rocksdb_filterpolicy_create_ribbon(bloom_equivalent_bits_per_key);
+    pub fn createRibbon(bloom_equivalent_bits_per_key: f64) Self {
+        return helpers.wrap(Self, api.rocksdb_filterpolicy_create_ribbon(bloom_equivalent_bits_per_key));
     }
 
     pub fn createRibbonHybrid(
         bloom_equivalent_bits_per_key: f64,
         bloom_before_level: i64,
-    ) [*c]api.rocksdb_filterpolicy_t {
-        return api.rocksdb_filterpolicy_create_ribbon_hybrid(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_filterpolicy_create_ribbon_hybrid(
             bloom_equivalent_bits_per_key,
             bloom_before_level,
-        );
+        ));
     }
 
     test RocksdbFilterpolicy {
@@ -1560,8 +1547,8 @@ pub const RocksdbFlushoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_flushoptions_t,
 
-    pub fn create() [*c]api.rocksdb_flushoptions_t {
-        return api.rocksdb_flushoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_flushoptions_create());
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1588,14 +1575,11 @@ pub const RocksdbHyperClockCacheOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_hyper_clock_cache_options_t,
 
-    pub fn create(
-        capacity: i64,
-        estimated_entry_charge: i64,
-    ) [*c]api.rocksdb_hyper_clock_cache_options_t {
-        return api.rocksdb_hyper_clock_cache_options_create(
+    pub fn create(capacity: i64, estimated_entry_charge: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_hyper_clock_cache_options_create(
             capacity,
             estimated_entry_charge,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -1642,8 +1626,8 @@ pub const RocksdbImportColumnFamilyOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_import_column_family_options_t,
 
-    pub fn create() [*c]api.rocksdb_import_column_family_options_t {
-        return api.rocksdb_import_column_family_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_import_column_family_options_create());
     }
 
     pub fn setMoveFiles(arg0: *Self, arg1: u8) void {
@@ -1669,8 +1653,8 @@ pub const RocksdbIngestexternalfileoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_ingestexternalfileoptions_t,
 
-    pub fn create() [*c]api.rocksdb_ingestexternalfileoptions_t {
-        return api.rocksdb_ingestexternalfileoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_ingestexternalfileoptions_create());
     }
 
     pub fn setMoveFiles(opt: *Self, move_files: u8) void {
@@ -1822,14 +1806,11 @@ pub const RocksdbLevelMetadata = packed struct {
         return api.rocksdb_level_metadata_get_file_count(helpers.unwrap(level_meta.*));
     }
 
-    pub fn getSstFileMetadata(
-        level_meta: *Self,
-        i: i64,
-    ) [*c]api.rocksdb_sst_file_metadata_t {
-        return api.rocksdb_level_metadata_get_sst_file_metadata(
+    pub fn getSstFileMetadata(level_meta: *Self, i: i64) RocksdbSstFileMetadata {
+        return helpers.wrap(RocksdbSstFileMetadata, api.rocksdb_level_metadata_get_sst_file_metadata(
             helpers.unwrap(level_meta.*),
             i,
-        );
+        ));
     }
 
     test RocksdbLevelMetadata {
@@ -1844,8 +1825,8 @@ pub const RocksdbLivefile = packed struct {
     const Self = @This();
     ref: *api.rocksdb_livefile_t,
 
-    pub fn create() [*c]api.rocksdb_livefile_t {
-        return api.rocksdb_livefile_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_livefile_create());
     }
 
     pub fn setColumnFamilyName(arg0: *Self, arg1: [*c]const i8) void {
@@ -1908,8 +1889,8 @@ pub const RocksdbLivefiles = packed struct {
     const Self = @This();
     ref: *api.rocksdb_livefiles_t,
 
-    pub fn create() [*c]api.rocksdb_livefiles_t {
-        return api.rocksdb_livefiles_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_livefiles_create());
     }
 
     pub fn count(arg0: Self) i64 {
@@ -1980,11 +1961,8 @@ pub const RocksdbLogger = packed struct {
     const Self = @This();
     ref: *api.rocksdb_logger_t,
 
-    pub fn createStderrLogger(
-        log_level: i64,
-        prefix: [*c]const i8,
-    ) [*c]api.rocksdb_logger_t {
-        return api.rocksdb_logger_create_stderr_logger(log_level, prefix);
+    pub fn createStderrLogger(log_level: i64, prefix: [*c]const i8) Self {
+        return helpers.wrap(Self, api.rocksdb_logger_create_stderr_logger(log_level, prefix));
     }
 
     pub fn createCallbackLogger(
@@ -1996,8 +1974,8 @@ pub const RocksdbLogger = packed struct {
             i64,
         ) void,
         priv: *anyopaque,
-    ) [*c]api.rocksdb_logger_t {
-        return api.rocksdb_logger_create_callback_logger(log_level, arg1, priv);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_logger_create_callback_logger(log_level, arg1, priv));
     }
 
     pub fn destroy(logger: *Self) void {
@@ -2016,8 +1994,8 @@ pub const RocksdbLruCacheOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_lru_cache_options_t,
 
-    pub fn create() [*c]api.rocksdb_lru_cache_options_t {
-        return api.rocksdb_lru_cache_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_lru_cache_options_create());
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -2054,10 +2032,8 @@ pub const RocksdbMemoryAllocator = packed struct {
     const Self = @This();
     ref: *api.rocksdb_memory_allocator_t,
 
-    pub fn jemallocNodumpAllocatorCreate(
-        errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_memory_allocator_t {
-        return api.rocksdb_jemalloc_nodump_allocator_create(errptr);
+    pub fn jemallocNodumpAllocatorCreate(errptr: [*c][*c]i8) Self {
+        return helpers.wrap(Self, api.rocksdb_jemalloc_nodump_allocator_create(errptr));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -2076,8 +2052,8 @@ pub const RocksdbMemoryConsumers = packed struct {
     const Self = @This();
     ref: *api.rocksdb_memory_consumers_t,
 
-    pub fn create() [*c]api.rocksdb_memory_consumers_t {
-        return api.rocksdb_memory_consumers_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_memory_consumers_create());
     }
 
     pub fn addDb(consumers: *Self, db: *Rocksdb) void {
@@ -2110,14 +2086,11 @@ pub const RocksdbMemoryUsage = packed struct {
     const Self = @This();
     ref: *api.rocksdb_memory_usage_t,
 
-    pub fn create(
-        consumers: *RocksdbMemoryConsumers,
-        errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_memory_usage_t {
-        return api.rocksdb_approximate_memory_usage_create(
+    pub fn create(consumers: *RocksdbMemoryConsumers, errptr: [*c][*c]i8) Self {
+        return helpers.wrap(Self, api.rocksdb_approximate_memory_usage_create(
             helpers.unwrap(consumers.*),
             errptr,
-        );
+        ));
     }
 
     pub fn destroy(usage: *Self) void {
@@ -2227,15 +2200,15 @@ pub const RocksdbMergeoperator = packed struct {
         name: [*c]fn (
             *anyopaque,
         ) [*c]const i8,
-    ) [*c]api.rocksdb_mergeoperator_t {
-        return api.rocksdb_mergeoperator_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_mergeoperator_create(
             state,
             destructor,
             full_merge,
             partial_merge,
             delete_value,
             name,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -2254,8 +2227,8 @@ pub const RocksdbOptimistictransactionOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_optimistictransaction_options_t,
 
-    pub fn create() [*c]api.rocksdb_optimistictransaction_options_t {
-        return api.rocksdb_optimistictransaction_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_optimistictransaction_options_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -2285,12 +2258,12 @@ pub const RocksdbOptimistictransactiondb = packed struct {
         options: RocksdbOptions,
         name: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_optimistictransactiondb_t {
-        return api.rocksdb_optimistictransactiondb_open(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_optimistictransactiondb_open(
             helpers.unwrap(options),
             name,
             errptr,
-        );
+        ));
     }
 
     pub fn openColumnFamilies(
@@ -2301,8 +2274,8 @@ pub const RocksdbOptimistictransactiondb = packed struct {
         column_family_options: [*c]const [*c]const api.rocksdb_options_t,
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_optimistictransactiondb_t {
-        return api.rocksdb_optimistictransactiondb_open_column_families(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_optimistictransactiondb_open_column_families(
             helpers.unwrap(options),
             name,
             num_column_families,
@@ -2310,11 +2283,11 @@ pub const RocksdbOptimistictransactiondb = packed struct {
             column_family_options,
             column_family_handles,
             errptr,
-        );
+        ));
     }
 
-    pub fn getBaseDb(otxn_db: *Self) [*c]api.rocksdb_t {
-        return api.rocksdb_optimistictransactiondb_get_base_db(helpers.unwrap(otxn_db.*));
+    pub fn getBaseDb(otxn_db: *Self) Rocksdb {
+        return helpers.wrap(Rocksdb, api.rocksdb_optimistictransactiondb_get_base_db(helpers.unwrap(otxn_db.*)));
     }
 
     pub fn write(
@@ -2338,11 +2311,11 @@ pub const RocksdbOptimistictransactiondb = packed struct {
     pub fn checkpointObjectCreate(
         otxn_db: *Self,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_checkpoint_t {
-        return api.rocksdb_optimistictransactiondb_checkpoint_object_create(
+    ) RocksdbCheckpoint {
+        return helpers.wrap(RocksdbCheckpoint, api.rocksdb_optimistictransactiondb_checkpoint_object_create(
             helpers.unwrap(otxn_db.*),
             errptr,
-        );
+        ));
     }
 
     pub fn propertyValue(db: *Self, propname: [*c]const i8) [*c]i8 {
@@ -2449,16 +2422,16 @@ pub const RocksdbOptions = packed struct {
         );
     }
 
-    pub fn create() [*c]api.rocksdb_options_t {
-        return api.rocksdb_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_options_create());
     }
 
     pub fn destroy(arg0: *Self) void {
         return api.rocksdb_options_destroy(helpers.unwrap(arg0.*));
     }
 
-    pub fn createCopy(arg0: *Self) [*c]api.rocksdb_options_t {
-        return api.rocksdb_options_create_copy(helpers.unwrap(arg0.*));
+    pub fn createCopy(arg0: *Self) Self {
+        return helpers.wrap(Self, api.rocksdb_options_create_copy(helpers.unwrap(arg0.*)));
     }
 
     pub fn increaseParallelism(opt: *Self, total_threads: i64) void {
@@ -2633,8 +2606,8 @@ pub const RocksdbOptions = packed struct {
         );
     }
 
-    pub fn getInfoLog(opt: *Self) [*c]api.rocksdb_logger_t {
-        return api.rocksdb_options_get_info_log(helpers.unwrap(opt.*));
+    pub fn getInfoLog(opt: *Self) RocksdbLogger {
+        return helpers.wrap(RocksdbLogger, api.rocksdb_options_get_info_log(helpers.unwrap(opt.*)));
     }
 
     pub fn setInfoLogLevel(arg0: *Self, arg1: i64) void {
@@ -3937,8 +3910,8 @@ pub const RocksdbPerfcontext = packed struct {
     const Self = @This();
     ref: *api.rocksdb_perfcontext_t,
 
-    pub fn create() [*c]api.rocksdb_perfcontext_t {
-        return api.rocksdb_perfcontext_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_perfcontext_create());
     }
 
     pub fn reset(context: *Self) void {
@@ -4016,24 +3989,24 @@ pub const RocksdbRatelimiter = packed struct {
         rate_bytes_per_sec: i64,
         refill_period_us: i64,
         fairness: i64,
-    ) [*c]api.rocksdb_ratelimiter_t {
-        return api.rocksdb_ratelimiter_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_ratelimiter_create(
             rate_bytes_per_sec,
             refill_period_us,
             fairness,
-        );
+        ));
     }
 
     pub fn createAutoTuned(
         rate_bytes_per_sec: i64,
         refill_period_us: i64,
         fairness: i64,
-    ) [*c]api.rocksdb_ratelimiter_t {
-        return api.rocksdb_ratelimiter_create_auto_tuned(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_ratelimiter_create_auto_tuned(
             rate_bytes_per_sec,
             refill_period_us,
             fairness,
-        );
+        ));
     }
 
     pub fn createWithMode(
@@ -4042,14 +4015,14 @@ pub const RocksdbRatelimiter = packed struct {
         fairness: i64,
         mode: i64,
         auto_tuned: i64,
-    ) [*c]api.rocksdb_ratelimiter_t {
-        return api.rocksdb_ratelimiter_create_with_mode(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_ratelimiter_create_with_mode(
             rate_bytes_per_sec,
             refill_period_us,
             fairness,
             mode,
             auto_tuned,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -4068,8 +4041,8 @@ pub const RocksdbReadoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_readoptions_t,
 
-    pub fn create() [*c]api.rocksdb_readoptions_t {
-        return api.rocksdb_readoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_readoptions_create());
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -4269,8 +4242,8 @@ pub const RocksdbRestoreOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_restore_options_t,
 
-    pub fn create() [*c]api.rocksdb_restore_options_t {
-        return api.rocksdb_restore_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_restore_options_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -4341,19 +4314,19 @@ pub const RocksdbSlicetransform = packed struct {
         name: [*c]fn (
             *anyopaque,
         ) [*c]const i8,
-    ) [*c]api.rocksdb_slicetransform_t {
-        return api.rocksdb_slicetransform_create(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_slicetransform_create(
             state,
             destructor,
             transform,
             in_domain,
             in_range,
             name,
-        );
+        ));
     }
 
-    pub fn createNoop() [*c]api.rocksdb_slicetransform_t {
-        return api.rocksdb_slicetransform_create_noop();
+    pub fn createNoop() Self {
+        return helpers.wrap(Self, api.rocksdb_slicetransform_create_noop());
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -4388,8 +4361,8 @@ pub const RocksdbSstFileManager = packed struct {
     const Self = @This();
     ref: *api.rocksdb_sst_file_manager_t,
 
-    pub fn create(env: *RocksdbEnv) [*c]api.rocksdb_sst_file_manager_t {
-        return api.rocksdb_sst_file_manager_create(helpers.unwrap(env.*));
+    pub fn create(env: *RocksdbEnv) Self {
+        return helpers.wrap(Self, api.rocksdb_sst_file_manager_create(helpers.unwrap(env.*)));
     }
 
     pub fn destroy(sfm: *Self) void {
@@ -4510,26 +4483,23 @@ pub const RocksdbSstfilewriter = packed struct {
     const Self = @This();
     ref: *api.rocksdb_sstfilewriter_t,
 
-    pub fn create(
-        env: RocksdbEnvoptions,
-        io_options: RocksdbOptions,
-    ) [*c]api.rocksdb_sstfilewriter_t {
-        return api.rocksdb_sstfilewriter_create(
+    pub fn create(env: RocksdbEnvoptions, io_options: RocksdbOptions) Self {
+        return helpers.wrap(Self, api.rocksdb_sstfilewriter_create(
             helpers.unwrap(env),
             helpers.unwrap(io_options),
-        );
+        ));
     }
 
     pub fn createWithComparator(
         env: RocksdbEnvoptions,
         io_options: RocksdbOptions,
         comparator: RocksdbComparator,
-    ) [*c]api.rocksdb_sstfilewriter_t {
-        return api.rocksdb_sstfilewriter_create_with_comparator(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_sstfilewriter_create_with_comparator(
             helpers.unwrap(env),
             helpers.unwrap(io_options),
             helpers.unwrap(comparator),
-        );
+        ));
     }
 
     pub fn open(writer: *Self, name: [*c]const i8, errptr: [*c][*c]i8) void {
@@ -4668,8 +4638,8 @@ pub const RocksdbStatisticsHistogramData = packed struct {
     const Self = @This();
     ref: *api.rocksdb_statistics_histogram_data_t,
 
-    pub fn create() [*c]api.rocksdb_statistics_histogram_data_t {
-        return api.rocksdb_statistics_histogram_data_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_statistics_histogram_data_create());
     }
 
     pub fn destroy(data: *Self) void {
@@ -4784,8 +4754,8 @@ pub const Rocksdb = packed struct {
         options: RocksdbOptions,
         name: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open(helpers.unwrap(options), name, errptr);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open(helpers.unwrap(options), name, errptr));
     }
 
     pub fn openWithTtl(
@@ -4793,8 +4763,8 @@ pub const Rocksdb = packed struct {
         name: [*c]const i8,
         ttl: i64,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_with_ttl(helpers.unwrap(options), name, ttl, errptr);
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_with_ttl(helpers.unwrap(options), name, ttl, errptr));
     }
 
     pub fn openForReadOnly(
@@ -4802,13 +4772,13 @@ pub const Rocksdb = packed struct {
         name: [*c]const i8,
         error_if_wal_file_exists: u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_for_read_only(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_for_read_only(
             helpers.unwrap(options),
             name,
             error_if_wal_file_exists,
             errptr,
-        );
+        ));
     }
 
     pub fn openAsSecondary(
@@ -4816,13 +4786,13 @@ pub const Rocksdb = packed struct {
         name: [*c]const i8,
         secondary_path: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_as_secondary(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_as_secondary(
             helpers.unwrap(options),
             name,
             secondary_path,
             errptr,
-        );
+        ));
     }
 
     pub fn putWithTs(
@@ -5015,8 +4985,8 @@ pub const Rocksdb = packed struct {
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         trim_ts: []u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_and_trim_history(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_and_trim_history(
             helpers.unwrap(options),
             name,
             num_column_families,
@@ -5026,7 +4996,7 @@ pub const Rocksdb = packed struct {
             @ptrCast(trim_ts.ptr),
             @intCast(trim_ts.len),
             errptr,
-        );
+        ));
     }
 
     pub fn openColumnFamilies(
@@ -5037,8 +5007,8 @@ pub const Rocksdb = packed struct {
         column_family_options: [*c]const [*c]const api.rocksdb_options_t,
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_column_families(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_column_families(
             helpers.unwrap(options),
             name,
             num_column_families,
@@ -5046,7 +5016,7 @@ pub const Rocksdb = packed struct {
             column_family_options,
             column_family_handles,
             errptr,
-        );
+        ));
     }
 
     pub fn openColumnFamiliesWithTtl(
@@ -5058,8 +5028,8 @@ pub const Rocksdb = packed struct {
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         ttls: [*c]const i64,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_column_families_with_ttl(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_column_families_with_ttl(
             helpers.unwrap(options),
             name,
             num_column_families,
@@ -5068,7 +5038,7 @@ pub const Rocksdb = packed struct {
             column_family_handles,
             ttls,
             errptr,
-        );
+        ));
     }
 
     pub fn openForReadOnlyColumnFamilies(
@@ -5080,8 +5050,8 @@ pub const Rocksdb = packed struct {
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         error_if_wal_file_exists: u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_for_read_only_column_families(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_for_read_only_column_families(
             helpers.unwrap(options),
             name,
             num_column_families,
@@ -5090,7 +5060,7 @@ pub const Rocksdb = packed struct {
             column_family_handles,
             error_if_wal_file_exists,
             errptr,
-        );
+        ));
     }
 
     pub fn openAsSecondaryColumnFamilies(
@@ -5102,8 +5072,8 @@ pub const Rocksdb = packed struct {
         column_family_options: [*c]const [*c]const api.rocksdb_options_t,
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_t {
-        return api.rocksdb_open_as_secondary_column_families(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_open_as_secondary_column_families(
             helpers.unwrap(options),
             name,
             secondary_path,
@@ -5112,7 +5082,7 @@ pub const Rocksdb = packed struct {
             column_family_options,
             column_family_handles,
             errptr,
-        );
+        ));
     }
 
     pub fn createColumnFamily(
@@ -5120,13 +5090,13 @@ pub const Rocksdb = packed struct {
         column_family_options: RocksdbOptions,
         column_family_name: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_column_family_handle_t {
-        return api.rocksdb_create_column_family(
+    ) RocksdbColumnFamilyHandle {
+        return helpers.wrap(RocksdbColumnFamilyHandle, api.rocksdb_create_column_family(
             helpers.unwrap(db.*),
             helpers.unwrap(column_family_options),
             column_family_name,
             errptr,
-        );
+        ));
     }
 
     pub fn createColumnFamilies(
@@ -5154,15 +5124,15 @@ pub const Rocksdb = packed struct {
         import_options: *RocksdbImportColumnFamilyOptions,
         metadata: *RocksdbExportImportFilesMetadata,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_column_family_handle_t {
-        return api.rocksdb_create_column_family_with_import(
+    ) RocksdbColumnFamilyHandle {
+        return helpers.wrap(RocksdbColumnFamilyHandle, api.rocksdb_create_column_family_with_import(
             helpers.unwrap(db.*),
             helpers.unwrap(column_family_options.*),
             column_family_name,
             helpers.unwrap(import_options.*),
             helpers.unwrap(metadata.*),
             errptr,
-        );
+        ));
     }
 
     pub fn createColumnFamilyWithTtl(
@@ -5171,14 +5141,14 @@ pub const Rocksdb = packed struct {
         column_family_name: [*c]const i8,
         ttl: i64,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_column_family_handle_t {
-        return api.rocksdb_create_column_family_with_ttl(
+    ) RocksdbColumnFamilyHandle {
+        return helpers.wrap(RocksdbColumnFamilyHandle, api.rocksdb_create_column_family_with_ttl(
             helpers.unwrap(db.*),
             helpers.unwrap(column_family_options),
             column_family_name,
             ttl,
             errptr,
-        );
+        ));
     }
 
     pub fn dropColumnFamily(
@@ -5193,10 +5163,8 @@ pub const Rocksdb = packed struct {
         );
     }
 
-    pub fn getDefaultColumnFamilyHandle(
-        db: *Self,
-    ) [*c]api.rocksdb_column_family_handle_t {
-        return api.rocksdb_get_default_column_family_handle(helpers.unwrap(db.*));
+    pub fn getDefaultColumnFamilyHandle(db: *Self) RocksdbColumnFamilyHandle {
+        return helpers.wrap(RocksdbColumnFamilyHandle, api.rocksdb_get_default_column_family_handle(helpers.unwrap(db.*)));
     }
 
     pub fn close(db: *Self) void {
@@ -5621,11 +5589,8 @@ pub const Rocksdb = packed struct {
         );
     }
 
-    pub fn createIterator(
-        db: *Self,
-        options: RocksdbReadoptions,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_create_iterator(helpers.unwrap(db.*), helpers.unwrap(options));
+    pub fn createIterator(db: *Self, options: RocksdbReadoptions) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_create_iterator(helpers.unwrap(db.*), helpers.unwrap(options)));
     }
 
     pub fn getUpdatesSince(
@@ -5633,25 +5598,25 @@ pub const Rocksdb = packed struct {
         seq_number: i64,
         options: [*c]const api.rocksdb_wal_readoptions_t,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_wal_iterator_t {
-        return api.rocksdb_get_updates_since(
+    ) RocksdbWalIterator {
+        return helpers.wrap(RocksdbWalIterator, api.rocksdb_get_updates_since(
             helpers.unwrap(db.*),
             seq_number,
             options,
             errptr,
-        );
+        ));
     }
 
     pub fn createIteratorCf(
         db: *Self,
         options: RocksdbReadoptions,
         column_family: *RocksdbColumnFamilyHandle,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_create_iterator_cf(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_create_iterator_cf(
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
-        );
+        ));
     }
 
     pub fn createIterators(
@@ -5672,8 +5637,8 @@ pub const Rocksdb = packed struct {
         );
     }
 
-    pub fn createSnapshot(db: *Self) [*c]const api.rocksdb_snapshot_t {
-        return api.rocksdb_create_snapshot(helpers.unwrap(db.*));
+    pub fn createSnapshot(db: *Self) RocksdbSnapshot {
+        return helpers.wrap(RocksdbSnapshot, api.rocksdb_create_snapshot(helpers.unwrap(db.*)));
     }
 
     pub fn releaseSnapshot(db: *Self, snapshot: RocksdbSnapshot) void {
@@ -5887,8 +5852,8 @@ pub const Rocksdb = packed struct {
         );
     }
 
-    pub fn livefiles(db: *Self) [*c]const api.rocksdb_livefiles_t {
-        return api.rocksdb_livefiles(helpers.unwrap(db.*));
+    pub fn livefiles(db: *Self) RocksdbLivefiles {
+        return helpers.wrap(RocksdbLivefiles, api.rocksdb_livefiles(helpers.unwrap(db.*)));
     }
 
     pub fn flush(db: *Self, options: RocksdbFlushoptions, errptr: [*c][*c]i8) void {
@@ -6055,20 +6020,18 @@ pub const Rocksdb = packed struct {
         );
     }
 
-    pub fn getColumnFamilyMetadata(
-        db: *Self,
-    ) [*c]api.rocksdb_column_family_metadata_t {
-        return api.rocksdb_get_column_family_metadata(helpers.unwrap(db.*));
+    pub fn getColumnFamilyMetadata(db: *Self) RocksdbColumnFamilyMetadata {
+        return helpers.wrap(RocksdbColumnFamilyMetadata, api.rocksdb_get_column_family_metadata(helpers.unwrap(db.*)));
     }
 
     pub fn getColumnFamilyMetadataCf(
         db: *Self,
         column_family: *RocksdbColumnFamilyHandle,
-    ) [*c]api.rocksdb_column_family_metadata_t {
-        return api.rocksdb_get_column_family_metadata_cf(
+    ) RocksdbColumnFamilyMetadata {
+        return helpers.wrap(RocksdbColumnFamilyMetadata, api.rocksdb_get_column_family_metadata_cf(
             helpers.unwrap(db.*),
             helpers.unwrap(column_family.*),
-        );
+        ));
     }
 
     pub fn transactiondbCloseBaseDb(base_db: *Self) void {
@@ -6086,14 +6049,14 @@ pub const Rocksdb = packed struct {
         options: RocksdbReadoptions,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_get_pinned(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_get_pinned(
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getPinnedCf(
@@ -6102,15 +6065,15 @@ pub const Rocksdb = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_get_pinned_cf(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_get_pinned_cf(
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn cancelAllBackgroundWork(db: *Self, wait: u8) void {
@@ -6142,14 +6105,14 @@ pub const Rocksdb = packed struct {
         options: RocksdbReadoptions,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnable_handle_t {
-        return api.rocksdb_get_pinned_v2(
+    ) RocksdbPinnableHandle {
+        return helpers.wrap(RocksdbPinnableHandle, api.rocksdb_get_pinned_v2(
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getPinnedCfV2(
@@ -6158,15 +6121,15 @@ pub const Rocksdb = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnable_handle_t {
-        return api.rocksdb_get_pinned_cf_v2(
+    ) RocksdbPinnableHandle {
+        return helpers.wrap(RocksdbPinnableHandle, api.rocksdb_get_pinned_cf_v2(
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getIntoBuffer(
@@ -6227,8 +6190,8 @@ pub const RocksdbTransactionOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_transaction_options_t,
 
-    pub fn create() [*c]api.rocksdb_transaction_options_t {
-        return api.rocksdb_transaction_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_transaction_options_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -6295,13 +6258,13 @@ pub const RocksdbTransaction = packed struct {
         write_options: RocksdbWriteoptions,
         txn_options: RocksdbTransactionOptions,
         old_txn: *Self,
-    ) [*c]api.rocksdb_transaction_t {
-        return api.rocksdb_transaction_begin(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_transaction_begin(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(write_options),
             helpers.unwrap(txn_options),
             helpers.unwrap(old_txn.*),
-        );
+        ));
     }
 
     pub fn setName(txn: *Self, name: []const u8, errptr: [*c][*c]i8) void {
@@ -6344,8 +6307,8 @@ pub const RocksdbTransaction = packed struct {
         return api.rocksdb_transaction_destroy(helpers.unwrap(txn.*));
     }
 
-    pub fn getWritebatchWi(txn: *Self) [*c]api.rocksdb_writebatch_wi_t {
-        return api.rocksdb_transaction_get_writebatch_wi(helpers.unwrap(txn.*));
+    pub fn getWritebatchWi(txn: *Self) RocksdbWritebatchWi {
+        return helpers.wrap(RocksdbWritebatchWi, api.rocksdb_transaction_get_writebatch_wi(helpers.unwrap(txn.*)));
     }
 
     pub fn rebuildFromWritebatch(
@@ -6386,8 +6349,8 @@ pub const RocksdbTransaction = packed struct {
         );
     }
 
-    pub fn getSnapshot(txn: *Self) [*c]const api.rocksdb_snapshot_t {
-        return api.rocksdb_transaction_get_snapshot(helpers.unwrap(txn.*));
+    pub fn getSnapshot(txn: *Self) RocksdbSnapshot {
+        return helpers.wrap(RocksdbSnapshot, api.rocksdb_transaction_get_snapshot(helpers.unwrap(txn.*)));
     }
 
     pub fn get(
@@ -6412,14 +6375,14 @@ pub const RocksdbTransaction = packed struct {
         options: RocksdbReadoptions,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transaction_get_pinned(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transaction_get_pinned(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getCf(
@@ -6447,15 +6410,15 @@ pub const RocksdbTransaction = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transaction_get_pinned_cf(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transaction_get_pinned_cf(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getForUpdate(
@@ -6483,15 +6446,15 @@ pub const RocksdbTransaction = packed struct {
         key: []const u8,
         exclusive: u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transaction_get_pinned_for_update(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transaction_get_pinned_for_update(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             exclusive,
             errptr,
-        );
+        ));
     }
 
     pub fn getForUpdateCf(
@@ -6522,8 +6485,8 @@ pub const RocksdbTransaction = packed struct {
         key: []const u8,
         exclusive: u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transaction_get_pinned_for_update_cf(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transaction_get_pinned_for_update_cf(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
@@ -6531,7 +6494,7 @@ pub const RocksdbTransaction = packed struct {
             @intCast(key.len),
             exclusive,
             errptr,
-        );
+        ));
     }
 
     pub fn multiGet(
@@ -6718,26 +6681,23 @@ pub const RocksdbTransaction = packed struct {
         );
     }
 
-    pub fn createIterator(
-        txn: *Self,
-        options: RocksdbReadoptions,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_transaction_create_iterator(
+    pub fn createIterator(txn: *Self, options: RocksdbReadoptions) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_transaction_create_iterator(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
-        );
+        ));
     }
 
     pub fn createIteratorCf(
         txn: *Self,
         options: RocksdbReadoptions,
         column_family: *RocksdbColumnFamilyHandle,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_transaction_create_iterator_cf(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_transaction_create_iterator_cf(
             helpers.unwrap(txn.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
-        );
+        ));
     }
 
     pub fn optimistictransactionBegin(
@@ -6745,13 +6705,13 @@ pub const RocksdbTransaction = packed struct {
         write_options: RocksdbWriteoptions,
         otxn_options: RocksdbOptimistictransactionOptions,
         old_txn: *Self,
-    ) [*c]api.rocksdb_transaction_t {
-        return api.rocksdb_optimistictransaction_begin(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_optimistictransaction_begin(
             helpers.unwrap(otxn_db.*),
             helpers.unwrap(write_options),
             helpers.unwrap(otxn_options),
             helpers.unwrap(old_txn.*),
-        );
+        ));
     }
 
     test RocksdbTransaction {
@@ -6766,8 +6726,8 @@ pub const RocksdbTransactiondbOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_transactiondb_options_t,
 
-    pub fn create() [*c]api.rocksdb_transactiondb_options_t {
-        return api.rocksdb_transactiondb_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_transactiondb_options_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -6819,13 +6779,13 @@ pub const RocksdbTransactiondb = packed struct {
         column_family_options: RocksdbOptions,
         column_family_name: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_column_family_handle_t {
-        return api.rocksdb_transactiondb_create_column_family(
+    ) RocksdbColumnFamilyHandle {
+        return helpers.wrap(RocksdbColumnFamilyHandle, api.rocksdb_transactiondb_create_column_family(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(column_family_options),
             column_family_name,
             errptr,
-        );
+        ));
     }
 
     pub fn open(
@@ -6833,13 +6793,13 @@ pub const RocksdbTransactiondb = packed struct {
         txn_db_options: RocksdbTransactiondbOptions,
         name: [*c]const i8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_transactiondb_t {
-        return api.rocksdb_transactiondb_open(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_transactiondb_open(
             helpers.unwrap(options),
             helpers.unwrap(txn_db_options),
             name,
             errptr,
-        );
+        ));
     }
 
     pub fn openColumnFamilies(
@@ -6851,8 +6811,8 @@ pub const RocksdbTransactiondb = packed struct {
         column_family_options: [*c]const [*c]const api.rocksdb_options_t,
         column_family_handles: [*c][*c]api.rocksdb_column_family_handle_t,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_transactiondb_t {
-        return api.rocksdb_transactiondb_open_column_families(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_transactiondb_open_column_families(
             helpers.unwrap(options),
             helpers.unwrap(txn_db_options),
             name,
@@ -6861,11 +6821,11 @@ pub const RocksdbTransactiondb = packed struct {
             column_family_options,
             column_family_handles,
             errptr,
-        );
+        ));
     }
 
-    pub fn createSnapshot(txn_db: *Self) [*c]const api.rocksdb_snapshot_t {
-        return api.rocksdb_transactiondb_create_snapshot(helpers.unwrap(txn_db.*));
+    pub fn createSnapshot(txn_db: *Self) RocksdbSnapshot {
+        return helpers.wrap(RocksdbSnapshot, api.rocksdb_transactiondb_create_snapshot(helpers.unwrap(txn_db.*)));
     }
 
     pub fn releaseSnapshot(txn_db: *Self, snapshot: RocksdbSnapshot) void {
@@ -6887,8 +6847,8 @@ pub const RocksdbTransactiondb = packed struct {
         );
     }
 
-    pub fn getBaseDb(txn_db: *Self) [*c]api.rocksdb_t {
-        return api.rocksdb_transactiondb_get_base_db(helpers.unwrap(txn_db.*));
+    pub fn getBaseDb(txn_db: *Self) Rocksdb {
+        return helpers.wrap(Rocksdb, api.rocksdb_transactiondb_get_base_db(helpers.unwrap(txn_db.*)));
     }
 
     pub fn getPreparedTransactions(
@@ -6923,14 +6883,14 @@ pub const RocksdbTransactiondb = packed struct {
         options: RocksdbReadoptions,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transactiondb_get_pinned(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transactiondb_get_pinned(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getCf(
@@ -6958,15 +6918,15 @@ pub const RocksdbTransactiondb = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_transactiondb_get_pinned_cf(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_transactiondb_get_pinned_cf(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn multiGet(
@@ -7140,23 +7100,23 @@ pub const RocksdbTransactiondb = packed struct {
     pub fn createIterator(
         txn_db: *Self,
         options: RocksdbReadoptions,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_transactiondb_create_iterator(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_transactiondb_create_iterator(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(options),
-        );
+        ));
     }
 
     pub fn createIteratorCf(
         txn_db: *Self,
         options: RocksdbReadoptions,
         column_family: *RocksdbColumnFamilyHandle,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_transactiondb_create_iterator_cf(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_transactiondb_create_iterator_cf(
             helpers.unwrap(txn_db.*),
             helpers.unwrap(options),
             helpers.unwrap(column_family.*),
-        );
+        ));
     }
 
     pub fn close(txn_db: *Self) void {
@@ -7212,11 +7172,11 @@ pub const RocksdbTransactiondb = packed struct {
     pub fn checkpointObjectCreate(
         txn_db: *Self,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_checkpoint_t {
-        return api.rocksdb_transactiondb_checkpoint_object_create(
+    ) RocksdbCheckpoint {
+        return helpers.wrap(RocksdbCheckpoint, api.rocksdb_transactiondb_checkpoint_object_create(
             helpers.unwrap(txn_db.*),
             errptr,
-        );
+        ));
     }
 
     test RocksdbTransactiondb {
@@ -7231,8 +7191,8 @@ pub const RocksdbUniversalCompactionOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_universal_compaction_options_t,
 
-    pub fn create() [*c]api.rocksdb_universal_compaction_options_t {
-        return api.rocksdb_universal_compaction_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_universal_compaction_options_create());
     }
 
     pub fn setSizeRatio(arg0: *Self, arg1: i64) void {
@@ -7329,8 +7289,8 @@ pub const RocksdbWaitForCompactOptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_wait_for_compact_options_t,
 
-    pub fn create() [*c]api.rocksdb_wait_for_compact_options_t {
-        return api.rocksdb_wait_for_compact_options_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_wait_for_compact_options_create());
     }
 
     pub fn destroy(opt: *Self) void {
@@ -7417,23 +7377,20 @@ pub const RocksdbWriteBufferManager = packed struct {
     const Self = @This();
     ref: *api.rocksdb_write_buffer_manager_t,
 
-    pub fn create(
-        buffer_size: i64,
-        allow_stall: i64,
-    ) [*c]api.rocksdb_write_buffer_manager_t {
-        return api.rocksdb_write_buffer_manager_create(buffer_size, allow_stall);
+    pub fn create(buffer_size: i64, allow_stall: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_write_buffer_manager_create(buffer_size, allow_stall));
     }
 
     pub fn createWithCache(
         buffer_size: i64,
         cache: RocksdbCache,
         allow_stall: i64,
-    ) [*c]api.rocksdb_write_buffer_manager_t {
-        return api.rocksdb_write_buffer_manager_create_with_cache(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_write_buffer_manager_create_with_cache(
             buffer_size,
             helpers.unwrap(cache),
             allow_stall,
-        );
+        ));
     }
 
     pub fn destroy(wbm: *Self) void {
@@ -7494,19 +7451,16 @@ pub const RocksdbWritebatch = packed struct {
     const Self = @This();
     ref: *api.rocksdb_writebatch_t,
 
-    pub fn walIterGetBatch(
-        iter: RocksdbWalIterator,
-        seq: [*c]i64,
-    ) [*c]api.rocksdb_writebatch_t {
-        return api.rocksdb_wal_iter_get_batch(helpers.unwrap(iter), seq);
+    pub fn walIterGetBatch(iter: RocksdbWalIterator, seq: [*c]i64) Self {
+        return helpers.wrap(Self, api.rocksdb_wal_iter_get_batch(helpers.unwrap(iter), seq));
     }
 
-    pub fn create() [*c]api.rocksdb_writebatch_t {
-        return api.rocksdb_writebatch_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_create());
     }
 
-    pub fn createFrom(rep: [*c]const i8, size: i64) [*c]api.rocksdb_writebatch_t {
-        return api.rocksdb_writebatch_create_from(rep, size);
+    pub fn createFrom(rep: [*c]const i8, size: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_create_from(rep, size));
     }
 
     pub fn createWithParams(
@@ -7514,13 +7468,13 @@ pub const RocksdbWritebatch = packed struct {
         max_bytes: i64,
         protection_bytes_per_key: i64,
         default_cf_ts_sz: i64,
-    ) [*c]api.rocksdb_writebatch_t {
-        return api.rocksdb_writebatch_create_with_params(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_create_with_params(
             reserved_bytes,
             max_bytes,
             protection_bytes_per_key,
             default_cf_ts_sz,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -7975,15 +7929,12 @@ pub const RocksdbWritebatchWi = packed struct {
     const Self = @This();
     ref: *api.rocksdb_writebatch_wi_t,
 
-    pub fn create(
-        reserved_bytes: i64,
-        overwrite_keys: u8,
-    ) [*c]api.rocksdb_writebatch_wi_t {
-        return api.rocksdb_writebatch_wi_create(reserved_bytes, overwrite_keys);
+    pub fn create(reserved_bytes: i64, overwrite_keys: u8) Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_wi_create(reserved_bytes, overwrite_keys));
     }
 
-    pub fn createFrom(rep: [*c]const i8, size: i64) [*c]api.rocksdb_writebatch_wi_t {
-        return api.rocksdb_writebatch_wi_create_from(rep, size);
+    pub fn createFrom(rep: [*c]const i8, size: i64) Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_wi_create_from(rep, size));
     }
 
     pub fn createWithParams(
@@ -7992,14 +7943,14 @@ pub const RocksdbWritebatchWi = packed struct {
         overwrite_key: u8,
         max_bytes: i64,
         protection_bytes_per_key: i64,
-    ) [*c]api.rocksdb_writebatch_wi_t {
-        return api.rocksdb_writebatch_wi_create_with_params(
+    ) Self {
+        return helpers.wrap(Self, api.rocksdb_writebatch_wi_create_with_params(
             helpers.unwrap(backup_index_comparator.*),
             reserved_bytes,
             overwrite_key,
             max_bytes,
             protection_bytes_per_key,
-        );
+        ));
     }
 
     pub fn destroy(arg0: *Self) void {
@@ -8394,15 +8345,15 @@ pub const RocksdbWritebatchWi = packed struct {
         options: RocksdbReadoptions,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_writebatch_wi_get_pinned_from_batch_and_db(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_writebatch_wi_get_pinned_from_batch_and_db(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(db.*),
             helpers.unwrap(options),
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn getFromBatchAndDbCf(
@@ -8433,8 +8384,8 @@ pub const RocksdbWritebatchWi = packed struct {
         column_family: *RocksdbColumnFamilyHandle,
         key: []const u8,
         errptr: [*c][*c]i8,
-    ) [*c]api.rocksdb_pinnableslice_t {
-        return api.rocksdb_writebatch_wi_get_pinned_from_batch_and_db_cf(
+    ) RocksdbPinnableslice {
+        return helpers.wrap(RocksdbPinnableslice, api.rocksdb_writebatch_wi_get_pinned_from_batch_and_db_cf(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(db.*),
             helpers.unwrap(options),
@@ -8442,41 +8393,41 @@ pub const RocksdbWritebatchWi = packed struct {
             @ptrCast(key.ptr),
             @intCast(key.len),
             errptr,
-        );
+        ));
     }
 
     pub fn createIteratorWithBase(
         wbwi: *Self,
         base_iterator: *RocksdbIterator,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_writebatch_wi_create_iterator_with_base(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_writebatch_wi_create_iterator_with_base(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(base_iterator.*),
-        );
+        ));
     }
 
     pub fn createIteratorWithBaseReadopts(
         wbwi: *Self,
         base_iterator: *RocksdbIterator,
         options: RocksdbReadoptions,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_writebatch_wi_create_iterator_with_base_readopts(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_writebatch_wi_create_iterator_with_base_readopts(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(base_iterator.*),
             helpers.unwrap(options),
-        );
+        ));
     }
 
     pub fn createIteratorWithBaseCf(
         wbwi: *Self,
         base_iterator: *RocksdbIterator,
         cf: *RocksdbColumnFamilyHandle,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_writebatch_wi_create_iterator_with_base_cf(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_writebatch_wi_create_iterator_with_base_cf(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(base_iterator.*),
             helpers.unwrap(cf.*),
-        );
+        ));
     }
 
     pub fn createIteratorWithBaseCfReadopts(
@@ -8484,13 +8435,13 @@ pub const RocksdbWritebatchWi = packed struct {
         base_iterator: *RocksdbIterator,
         cf: *RocksdbColumnFamilyHandle,
         options: RocksdbReadoptions,
-    ) [*c]api.rocksdb_iterator_t {
-        return api.rocksdb_writebatch_wi_create_iterator_with_base_cf_readopts(
+    ) RocksdbIterator {
+        return helpers.wrap(RocksdbIterator, api.rocksdb_writebatch_wi_create_iterator_with_base_cf_readopts(
             helpers.unwrap(wbwi.*),
             helpers.unwrap(base_iterator.*),
             helpers.unwrap(cf.*),
             helpers.unwrap(options),
-        );
+        ));
     }
 
     pub fn updateTimestamps(
@@ -8524,8 +8475,8 @@ pub const RocksdbWriteoptions = packed struct {
     const Self = @This();
     ref: *api.rocksdb_writeoptions_t,
 
-    pub fn create() [*c]api.rocksdb_writeoptions_t {
-        return api.rocksdb_writeoptions_create();
+    pub fn create() Self {
+        return helpers.wrap(Self, api.rocksdb_writeoptions_create());
     }
 
     pub fn destroy(arg0: *Self) void {

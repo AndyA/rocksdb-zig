@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from enum import Enum
-from typing import Generator
+from typing import Generator, Optional
 
 from clang.cindex import Index
 from codegen.arena import Arena, ArgGroup, Fn, Struct, ZigArg
@@ -137,7 +138,14 @@ class RefType(Enum):
     CONST = 3
 
 
-def to_wrapper_type(struct: Struct, t: SysType) -> tuple[RefType, SysType]:
+@dataclass(kw_only=True, frozen=True)
+class Wrapped:
+    new_type: SysType
+    ref_type: RefType
+    name: Optional[str] = None
+
+
+def to_wrapper_type(struct: Struct, t: SysType, *, force_const=False) -> Wrapped:
     def wrapper_name(target: Struct) -> str:
         if id(struct) == id(target):
             return "Self"
@@ -145,41 +153,52 @@ def to_wrapper_type(struct: Struct, t: SysType) -> tuple[RefType, SysType]:
 
     match t:
         case PointerType(child=ExtType(is_const=is_const, name=name)):
-            if is_const:
-                if target := struct.arena.structs.get(name):
-                    return RefType.CONST, WrapperType(
-                        is_const=False, name=wrapper_name(target)
+            if target := struct.arena.structs.get(name):
+                new_name = wrapper_name(target)
+                if is_const or force_const:
+                    return Wrapped(
+                        new_type=WrapperType(is_const=False, name=new_name),
+                        ref_type=RefType.CONST,
+                        name=new_name,
                     )
-            else:
-                if target := struct.arena.structs.get(name):
-                    return RefType.VAR, PointerType(
-                        is_const=False,
-                        size=PointerSize.ONE,
-                        child=WrapperType(is_const=False, name=wrapper_name(target)),
+                else:
+                    return Wrapped(
+                        new_type=PointerType(
+                            is_const=False,
+                            size=PointerSize.ONE,
+                            child=WrapperType(is_const=False, name=new_name),
+                        ),
+                        ref_type=RefType.VAR,
+                        name=new_name,
                     )
+
         # case PointerType(child=child):
         #     mut, new_child = to_wrapper_type(struct, child)
         #     if mut:
         #         t.child = new_child
         #     return mut, t
 
-    return RefType.NO, t
+    return Wrapped(new_type=t, ref_type=RefType.NO)
 
 
-def handle_to_wrapper_args(arena: Arena) -> None:
+def handle_to_wrapper(arena: Arena) -> None:
     for struct in arena.structs.values():
         for fn in struct.fns:
             # Capture generator in a list because we're going to be
             # slicing the args
             for index, arg in list(visit_zig_args(fn)):
-                rt, new_type = to_wrapper_type(struct, arg.arg_type)
-                if rt != RefType.NO:
+                wrapped = to_wrapper_type(struct, arg.arg_type)
+                if wrapped.ref_type != RefType.NO:
                     ag = fn.args_group(index, index + 1)
-                    ag.zig_args[0].arg_type = new_type
-                    if rt == RefType.CONST:
+                    ag.zig_args[0].arg_type = wrapped.new_type
+                    if wrapped.ref_type == RefType.CONST:
                         ag.api_args[0] = f"helpers.unwrap({ag.api_args[0]})"
                     else:
                         ag.api_args[0] = f"helpers.unwrap({ag.api_args[0]}.*)"
+            ret = to_wrapper_type(struct, fn.ret_type, force_const=True)
+            if ret.ref_type != RefType.NO:
+                fn.ret_type = ret.new_type
+                fn.call = f"helpers.wrap({ret.name}, {fn.call})"
             fn.merge_args()
 
 
@@ -190,7 +209,7 @@ def main(header: str) -> None:
 
     add_struct_fields(arena)
     rename_args_to_avoid_shadowing(arena)
-    handle_to_wrapper_args(arena)
+    handle_to_wrapper(arena)
     slice_to_ptr_len(arena)
 
     print(
