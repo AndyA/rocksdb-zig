@@ -225,6 +225,14 @@ def main(header: str) -> None:
 
     print(arena.render_zig())
 
+    print(
+        """
+        test {
+            std.testing.refAllDecls(@This());
+        }
+        """
+    )
+
 
 if __name__ == "__main__":
     main("../../rocksdb/include/rocksdb/c.h")

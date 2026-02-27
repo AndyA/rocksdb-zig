@@ -8572,3 +8572,7 @@ pub const RocksdbWritestallinfo = packed struct {
         std.testing.refAllDecls(Self);
     }
 };
+
+test {
+    std.testing.refAllDecls(@This());
+}
