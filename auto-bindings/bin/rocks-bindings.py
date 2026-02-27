@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Generator
 
 from clang.cindex import Index
@@ -127,11 +128,42 @@ def add_struct_fields(arena: Arena) -> None:
         struct.add_post("}")
 
 
-def foo(struct: Struct, t: SysType) -> SysType:
+class WrapperType(ExtType): ...
+
+
+class RefType(Enum):
+    NO = 1
+    VAR = 2
+    CONST = 3
+
+
+def to_wrapper_type(struct: Struct, t: SysType) -> tuple[RefType, SysType]:
+    def wrapper_name(target: Struct) -> str:
+        if id(struct) == id(target):
+            return "Self"
+        return target.zig_name
+
     match t:
-        case PointerType(child=ExtType(name=name)):
-            pass
-    return t
+        case PointerType(child=ExtType(is_const=is_const, name=name)):
+            if is_const:
+                if target := struct.arena.structs.get(name):
+                    return RefType.CONST, WrapperType(
+                        is_const=False, name=wrapper_name(target)
+                    )
+            else:
+                if target := struct.arena.structs.get(name):
+                    return RefType.VAR, PointerType(
+                        is_const=False,
+                        size=PointerSize.ONE,
+                        child=WrapperType(is_const=False, name=wrapper_name(target)),
+                    )
+        # case PointerType(child=child):
+        #     mut, new_child = to_wrapper_type(struct, child)
+        #     if mut:
+        #         t.child = new_child
+        #     return mut, t
+
+    return RefType.NO, t
 
 
 def handle_to_wrapper_args(arena: Arena) -> None:
@@ -140,14 +172,21 @@ def handle_to_wrapper_args(arena: Arena) -> None:
             # Capture generator in a list because we're going to be
             # slicing the args
             for index, arg in list(visit_zig_args(fn)):
-                pass
+                rt, new_type = to_wrapper_type(struct, arg.arg_type)
+                if rt != RefType.NO:
+                    ag = fn.args_group(index, index + 1)
+                    ag.zig_args[0].arg_type = new_type
+                    if rt == RefType.CONST:
+                        ag.api_args[0] = f"helpers.unwrap({ag.api_args[0]})"
+                    else:
+                        ag.api_args[0] = f"helpers.unwrap({ag.api_args[0]}.*)"
             fn.merge_args()
 
 
 def main(header: str) -> None:
     idx = Index.create()
     tu = idx.parse(header)
-    arena = Arena.from_cursor(tu.cursor)
+    arena = Arena.from_cursor(tu.cursor, api="api")
 
     add_struct_fields(arena)
     rename_args_to_avoid_shadowing(arena)

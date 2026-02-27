@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Optional, Self
@@ -31,7 +32,7 @@ def comma_if_longer(source: str, maxlen: int) -> str:
     return source + ","
 
 
-@dataclass(kw_only=True, frozen=True)
+@dataclass(kw_only=True)
 class ZigArg:
     name: str
     arg_type: SysType
@@ -70,6 +71,7 @@ class Fn:
     args: list[ArgGroup]
     ret_type: SysType
     public: bool = True
+    call: str = "return %CALL%;"
 
     @classmethod
     def from_fndef(cls, *, arena: "Arena", fndef: FnDef):
@@ -151,7 +153,11 @@ class Fn:
             70 - len(self.name),
         )
         hdr = f"{pub}fn {self.zig_name}({fn_args}) {ret} " + "{"
-        call = f"{self.arena.api}.{self.name}({call_args});"
+        call = re.sub(
+            r"%CALL%",
+            f"{self.arena.api}.{self.name}({call_args})",
+            self.call,
+        )
         ftr = "}"
         return f"{hdr}\n{call}\n{ftr}"
 
@@ -276,7 +282,7 @@ class Struct:
 
 @dataclass(kw_only=True, frozen=True)
 class Arena:
-    api: str = "api"
+    api: str
     handles: set[str]
     fndefs: list[FnDef]
 
@@ -287,7 +293,7 @@ class Arena:
         return None
 
     @classmethod
-    def from_cursor(cls, cursor: Cursor) -> Self:
+    def from_cursor(cls, cursor: Cursor, *, api: str = "api") -> Self:
         handles: set[str] = set()
         fndefs: list[FnDef] = []
 
@@ -302,7 +308,7 @@ class Arena:
                 case TypeKind.TYPEDEF:  # ty:ignore[unresolved-attribute]
                     handles.add(cursor.spelling)
                 case TypeKind.FUNCTIONPROTO:  # ty:ignore[unresolved-attribute]
-                    fn = parse_clang_type(cursor.type)
+                    fn = parse_clang_type(cursor.type, namespace=api)
                     assert isinstance(fn, FnType)
                     arg_names = tuple(
                         safe_name(arg, i)
@@ -315,7 +321,7 @@ class Arena:
 
         scan(cursor)
 
-        return cls(handles=handles, fndefs=fndefs)
+        return cls(handles=handles, fndefs=fndefs, api=api)
 
     @cached_property
     def fns(self) -> list[Fn]:

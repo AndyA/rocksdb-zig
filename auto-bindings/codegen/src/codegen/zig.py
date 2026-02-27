@@ -20,8 +20,10 @@ def render_zig_type_no_const(t: SysType) -> str:
             return f"f{bits}"
         case VoidType():
             return "void"
-        case ExtType(name=name):
-            return f"api.{name}"
+        case ExtType(name=name, namespace=None):
+            return name
+        case ExtType(name=name, namespace=namespace):
+            return f"{namespace}.{name}"
         case FnType(arg_types=arg_types, ret_type=ret_type):
             args = ", ".join([render_zig_type(t) for t in arg_types])
             ret = render_zig_type(ret_type)

@@ -49,6 +49,7 @@ class PointerType(BaseType):
 @dataclass(kw_only=True)
 class ExtType(BaseType):
     name: str
+    namespace: Optional[str] = None
 
 
 @dataclass(kw_only=True)

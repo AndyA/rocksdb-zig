@@ -38,3 +38,7 @@ def parallel_arrays(
     return None
 
 ```
+
+# Bugs
+
+`getFullHistoryTsLow` has `ts_lowlen` but no `ts_low`

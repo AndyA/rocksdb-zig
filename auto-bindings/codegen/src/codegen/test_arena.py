@@ -29,11 +29,11 @@ def cptr(child: SysType):
 
 
 def ext(name: str) -> ExtType:
-    return ExtType(is_const=False, name=name)
+    return ExtType(is_const=False, name=name, namespace="api")
 
 
 def cext(name: str) -> ExtType:
-    return ExtType(is_const=True, name=name)
+    return ExtType(is_const=True, name=name, namespace="api")
 
 
 @pytest.fixture
