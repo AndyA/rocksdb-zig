@@ -49,18 +49,18 @@
           }
         }
 
-        start() {
-          window.requestAnimationFrame(() => {
-            this.redraw();
-            this.start();
-          });
-        }
-
         redraw() {
           for (const y of this.dirty) {
             this.rows[y].innerText = this.#getLine(y);
             this.dirty.delete(y);
           }
+        }
+
+        start() {
+          window.requestAnimationFrame(() => {
+            this.redraw();
+            this.start();
+          });
         }
 
         get(offset) {
@@ -86,6 +86,10 @@
         return data;
       }
 
+      function emptyChars(len) {
+        return new Uint8Array(len).fill(32);
+      }
+
       function delay(ms) {
         return new Promise((resolve, reject) => {
           setTimeout(resolve, ms);
@@ -102,19 +106,27 @@
               disp.set(j, bi);
             }
           }
-          await delay(5);
+          await delay(Math.max(1, (disp.data.length - i) / 100));
+        }
+      }
+
+      async function mixUp(disp) {
+        for (var i = 0; i < disp.data.length; i++) {
+          disp.set(i, Math.floor(Math.random() * 95 + 32));
+          if (i % 7 === 0) await delay(1);
         }
       }
 
       async function main() {
         const elt = document.getElementById("screen");
-        const disp = new Display(elt, randomChars(2000), 80);
+        const disp = new Display(elt, emptyChars(2000), 80);
         disp.render();
         disp.start();
         while (true) {
+          await delay(1500);
+          await mixUp(disp);
+          await delay(1000);
           await simpleSort(disp);
-          await delay(2000);
-          disp.setData(randomChars(2000));
         }
       }
     </script>
