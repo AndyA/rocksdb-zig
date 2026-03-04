@@ -21,3 +21,6 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-watcher>=0.6.3",
 ]
+
+[tool.uv.sources]
+libclang = { path = "../../../libclang" }

@@ -1,0 +1,130 @@
+<html>
+  <head>
+    <style>
+      body {
+        background: rgb(30, 30, 30);
+        color: rgb(40, 240, 100);
+        display: grid;
+        place-items: center;
+      }
+      #screen {
+        font-family: monospace;
+        font-size: 1vw;
+      }
+    </style>
+    <script>
+      class Display {
+        constructor(elt, data, width) {
+          this.elt = elt;
+          this.data = data;
+          this.width = width;
+          this.height = Math.ceil(this.data.length / width);
+          this.dirty = new Set();
+          this.rows = [];
+        }
+
+        setData(data) {
+          if (this.data && data.length != this.data.length)
+            throw new Error("Data size mismatch");
+          this.data = data;
+          for (var y = 0; y < self.height; y++) {
+            this.dirty.add(y);
+          }
+        }
+
+        #getLine(y) {
+          const ln = y * this.width;
+          return new TextDecoder("windows-1251").decode(
+            this.data.slice(ln, ln + this.width),
+          );
+        }
+
+        render() {
+          for (var y = 0; y < this.height; y++) {
+            const div = document.createElement("div");
+            div.innerText = this.#getLine(y);
+            this.elt.appendChild(div);
+            this.rows.push(div);
+            this.dirty.delete(y);
+          }
+        }
+
+        start() {
+          window.requestAnimationFrame(() => {
+            this.redraw();
+            this.start();
+          });
+        }
+
+        redraw() {
+          for (const y of this.dirty) {
+            this.rows[y].innerText = this.#getLine(y);
+            this.dirty.delete(y);
+          }
+        }
+
+        get(offset) {
+          if (offset < 0 || offset >= this.data.length)
+            throw new Error("Offset out of range");
+          return this.data[offset];
+        }
+
+        set(offset, v) {
+          if (offset < 0 || offset >= this.data.length)
+            throw new Error("Offset out of range");
+          this.data[offset] = v;
+          const ln = Math.floor(offset / this.width);
+          this.dirty.add(ln);
+        }
+      }
+
+      function randomChars(len) {
+        const data = new Uint8Array(len);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = Math.floor(Math.random() * 95 + 32);
+        }
+        return data;
+      }
+
+      function delay(ms) {
+        return new Promise((resolve, reject) => {
+          setTimeout(resolve, ms);
+        });
+      }
+
+      async function simpleSort(disp) {
+        for (var i = 0; i < disp.data.length - 1; i++) {
+          for (var j = i + 1; j < disp.data.length; j++) {
+            const bi = disp.get(i);
+            const bj = disp.get(j);
+            if (bj < bi) {
+              disp.set(i, bj);
+              disp.set(j, bi);
+            }
+          }
+          await delay(5);
+        }
+      }
+
+      async function main() {
+        const elt = document.getElementById("screen");
+        const disp = new Display(elt, randomChars(2000), 80);
+        disp.render();
+        disp.start();
+        while (true) {
+          await simpleSort(disp);
+          await delay(2000);
+          disp.setData(randomChars(2000));
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <pre id="screen"></pre>
+  </body>
+  <script>
+    main().then(() => {
+      console.log("Done");
+    });
+  </script>
+</html>

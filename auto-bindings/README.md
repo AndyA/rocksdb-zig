@@ -70,4 +70,13 @@ Odd `size_t` must be wrong:
     }
 ```
 
+```c
+extern ROCKSDB_LIBRARY_API void rocksdb_writebatch_wi_update_timestamps(
+    rocksdb_writebatch_wi_t* wbwi,
+    const char* ts,
+    size_t tslen,
+    void* state,
+    size_t (*get_ts_size)(void*, uint32_t), char** errptr);
+```
+
 Turns out we're picking up the return type of the callback rather than its name.

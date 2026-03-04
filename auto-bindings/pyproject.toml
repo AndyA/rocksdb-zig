@@ -16,3 +16,4 @@ members = [
 
 [tool.uv.sources]
 codegen = { workspace = true, editable = true }
+libclang = { path = "../../libclang" }

@@ -4,3 +4,4 @@
 __pycache__/
 tmp/
 zig-out/
+zig-pkg/
