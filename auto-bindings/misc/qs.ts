@@ -1,5 +1,13 @@
+const median3 = (a: number, b: number, c: number): number => {
+  if (a <= b && b <= c) return b;
+  if (a >= b && b >= c) return b;
+  if (b <= a && a <= c) return a;
+  if (b >= a && a >= c) return a;
+  return c;
+};
+
 const partition = (A: Uint8Array, lo: number, hi: number): number => {
-  const pivot = A[lo];
+  const pivot = median3(A[lo], A[hi], A[Math.floor((lo + hi) / 2)]);
   var i = lo - 1;
   var j = hi + 1;
   while (true) {
@@ -24,18 +32,13 @@ const quicksort = (A: Uint8Array, lo: number, hi: number): void => {
   }
 };
 
-// var bytes = Uint8Array.from([10, 3, 9, 2, 11, 1, 3, 3, 3]);
-var bytes = Uint8Array.from([11, 10, 5, 5, 5, 5, 2, 1]);
-quicksort(bytes, 0, bytes.length - 1);
+const avgSort = (ar: number[], lo: number, hi: number) => {
+  if (hi === lo) return;
 
-console.log(bytes);
-
-// const quickSort = (bytes: Uint8Array, start: number, end: number): void => {
-//   let lp = start;
-//   let rp = end;
-//   while (rp >= 0) {
-//     if (bytes[lp] > bytes[rp]) {
-//       if (lp >= rp) break;
-//     }
-//   }
-// };
+  if (hi === lo + 1) {
+    if (ar[lo] > ar[hi]) {
+      [ar[lo], ar[hi]] = [ar[hi], ar[lo]];
+    }
+    return;
+  }
+};
