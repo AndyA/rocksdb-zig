@@ -7,12 +7,23 @@
         display: grid;
         place-items: center;
         font-family: monospace;
+        font-size: 1.5vw;
+      }
+      table {
+        font-size: 1vw;
+      }
+      h1 {
+        font-size: 1.7vw;
       }
       #screen {
         font-size: 1vw;
       }
+      td {
+        padding-left: 2vw;
+        padding-right: 2vw;
+      }
       .display {
-        border: 2px solid rgb(40, 240, 100);
+        border: 3px solid rgb(40, 240, 100);
         border-radius: 1vw;
         margin-bottom: 1vw;
         padding: 0.7vw 2vw;
@@ -212,11 +223,11 @@
         { title: "exchange", fn: exchangeSort },
         { title: "selection", fn: selectionSort },
         {
-          title: "shell (power of 2 strides)",
+          title: "Shell (power of 2 strides)",
           fn: shellSort(powerOfTwoStrides),
         },
         {
-          title: "shell (Fibonacci strides)",
+          title: "Shell (Fibonacci strides)",
           fn: shellSort(fibStrides),
         },
       ];
@@ -235,7 +246,7 @@
           swap.innerText = Number(disp.swaps).toLocaleString();
         };
 
-        var pos = 0;
+        var pos = Math.floor(Math.random() * roster.length);
         while (true) {
           await delay(1500);
           const sortFn = roster[pos++];
@@ -255,15 +266,11 @@
     </div>
     <table>
       <tr>
-        <th>Operation</th>
-        <th>Count</th>
-      </tr>
-      <tr>
-        <td>Compare</td>
+        <td>compare</td>
         <td id="compare">0</td>
       </tr>
       <tr>
-        <td>Swap</td>
+        <td>swap</td>
         <td id="swap">0</td>
       </tr>
     </table>
