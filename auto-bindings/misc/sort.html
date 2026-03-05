@@ -21,6 +21,7 @@
           this.height = Math.ceil(this.data.length / width);
           this.dirty = new Set();
           this.rows = [];
+          this.orders = 0; // count of calls to order
         }
 
         setData(data) {
@@ -76,6 +77,31 @@
           const ln = Math.floor(offset / this.width);
           this.dirty.add(ln);
         }
+
+        order(off1, off2) {
+          this.orders++;
+          const b1 = this.get(off1);
+          const b2 = this.get(off2);
+
+          if (b1 > b2) {
+            this.set(off1, b2);
+            this.set(off2, b1);
+            return true;
+          }
+
+          return false;
+        }
+
+        wholeChunks(n) {
+          const count = Math.floor(this.orders / n);
+          this.orders -= count * n; // often count will be 0
+          return count;
+        }
+
+        async pace(n, ms) {
+          const wait = this.wholeChunks(n) * ms;
+          if (wait > 0) await delay(wait);
+        }
       }
 
       function randomChars(len) {
@@ -96,24 +122,39 @@
         });
       }
 
-      async function simpleSort(disp) {
-        for (var i = 0; i < disp.data.length - 1; i++) {
-          for (var j = i + 1; j < disp.data.length; j++) {
-            const bi = disp.get(i);
-            const bj = disp.get(j);
-            if (bj < bi) {
-              disp.set(i, bj);
-              disp.set(j, bi);
-            }
-          }
-          await delay(Math.max(1, (disp.data.length - i) / 100));
-        }
-      }
-
       async function mixUp(disp) {
         for (var i = 0; i < disp.data.length; i++) {
           disp.set(i, Math.floor(Math.random() * 95 + 32));
           if (i % 7 === 0) await delay(1);
+        }
+      }
+
+      async function simpleSort(disp) {
+        for (var i = 0; i < disp.data.length - 1; i++) {
+          for (var j = i + 1; j < disp.data.length; j++) {
+            disp.order(i, j);
+          }
+          await disp.pace(250, 1);
+        }
+      }
+
+      async function shellSort(disp) {
+        const len = disp.data.length;
+        var stride = 1;
+        while (stride * 2 < len) {
+          stride *= 2;
+        }
+        while (stride > 0) {
+          while (true) {
+            var changed = 0;
+            for (var i = 0; i < len - stride; i++) {
+              if (disp.order(i, i + stride)) changed++;
+            }
+            await disp.pace(250, 1);
+            // console.log(`  changed: ${changed}`);
+            if (changed === 0) break;
+          }
+          stride = Math.floor(stride / 2);
         }
       }
 
@@ -126,7 +167,7 @@
           await delay(1500);
           await mixUp(disp);
           await delay(1000);
-          await simpleSort(disp);
+          await shellSort(disp);
         }
       }
     </script>
